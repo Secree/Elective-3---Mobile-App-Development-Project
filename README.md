@@ -1,6 +1,6 @@
-Hello World Flutter App
+Flight Reserve App
 
-This is a minimal Flutter project that displays "Hello World" centered on the screen.
+This is a  Flutter project that let users reserve flight.
 
 Prerequisites
 - Install the Flutter SDK and ensure `flutter` is on your PATH.
@@ -20,3 +20,5 @@ flutter run -d android
 ```
 
 If you don't have Flutter installed yet, download it from https://flutter.dev and follow the setup instructions.
+
+Currently in progress
