@@ -28,51 +28,89 @@ class _LoginPageState extends State<LoginPage> {
     final ok = await db.validateUser(_emailCtrl.text.trim(), _passCtrl.text);
     setState(() => _loading = false);
     if (ok) {
-      Navigator.of(context).pushReplacementNamed('/home', arguments: _emailCtrl.text.trim());
+      Navigator.of(context)
+          .pushReplacementNamed('/home', arguments: _emailCtrl.text.trim());
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Invalid credentials')));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('Invalid credentials')));
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            children: [
-              TextFormField(
-                controller: _emailCtrl,
-                decoration: const InputDecoration(labelText: 'Email'),
-                validator: (v) => (v == null || v.isEmpty) ? 'Enter email' : null,
+      body: Container(
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('lib/image/bg-airplane.jpg'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: Center(
+          child: Card(
+            margin: const EdgeInsets.all(20),
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('Login',
+                        style: Theme.of(context).textTheme.headlineMedium),
+                    const SizedBox(height: 20),
+                    TextFormField(
+                      controller: _emailCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Email',
+                        prefixIcon: Icon(Icons.email),
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Enter email' : null,
+                    ),
+                    const SizedBox(height: 10),
+                    TextFormField(
+                      controller: _passCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Password',
+                        prefixIcon: Icon(Icons.lock),
+                        border: OutlineInputBorder(),
+                      ),
+                      obscureText: true,
+                      validator: (v) => (v == null || v.length < 4)
+                          ? 'Password min 4 chars'
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    _loading
+                        ? const CircularProgressIndicator()
+                        : Column(
+                            children: [
+                              FilledButton(
+                                onPressed: _login,
+                                child: const Text('Login'),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final res = await Navigator.of(context)
+                                      .pushNamed('/signup');
+                                  if (res == true) {
+                                    ScaffoldMessenger.of(context)
+                                        .showSnackBar(const SnackBar(
+                                      content: Text(
+                                          'Account created, please login'),
+                                    ));
+                                  }
+                                },
+                                child: const Text('Create an account'),
+                              )
+                            ],
+                          )
+                  ],
+                ),
               ),
-              TextFormField(
-                controller: _passCtrl,
-                decoration: const InputDecoration(labelText: 'Password'),
-                obscureText: true,
-                validator: (v) => (v == null || v.length < 4) ? 'Password min 4 chars' : null,
-              ),
-              const SizedBox(height: 20),
-              _loading
-                  ? const CircularProgressIndicator()
-                  : Column(
-                      children: [
-                        ElevatedButton(onPressed: _login, child: const Text('Login')),
-                        TextButton(
-                          onPressed: () async {
-                            final res = await Navigator.of(context).pushNamed('/signup');
-                            if (res == true) {
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Account created, please login')));
-                            }
-                          },
-                          child: const Text('Create an account'),
-                        )
-                      ],
-                    )
-            ],
+            ),
           ),
         ),
       ),

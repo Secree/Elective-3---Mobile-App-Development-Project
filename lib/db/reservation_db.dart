@@ -106,6 +106,15 @@ class ReservationDatabase {
     return maps.map((m) => Reservation.fromMap(m)).toList();
   }
 
+  Future<int> delete(int id) async {
+    final db = await instance.database;
+    return await db.delete(
+      'reservations',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
   Future close() async {
     final db = await instance.database;
     await db.close();
