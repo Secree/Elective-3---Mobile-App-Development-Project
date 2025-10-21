@@ -43,6 +43,12 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back),
+          onPressed: () {
+            Navigator.of(context).pushReplacementNamed('/');
+          },
+        ),
         title: const Text('Sign Up'),
         backgroundColor: Colors.transparent,
         elevation: 0,

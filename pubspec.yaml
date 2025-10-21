@@ -1,5 +1,5 @@
-name: hello_world_app
-description: A simple Flutter Hello World app.
+name: flight_reserve_grp6
+description: A flight reservation app.
 publish_to: 'none'
 version: 1.0.0+1
 environment:
