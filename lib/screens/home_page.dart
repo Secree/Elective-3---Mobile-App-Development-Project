@@ -365,30 +365,48 @@ class _HomePageState extends State<HomePage> {
                     ),
                   const SizedBox(height: 20),
                   if (isLoggedIn) ...[
-                    Text('Ongoing Reservations',
-                        style: Theme.of(context).textTheme.titleLarge),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: Text('Ongoing Reservations',
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          )),
+                    ),
                     const SizedBox(height: 8),
-                    Expanded(
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
                       child: _reservations.isEmpty
-                          ? const Card(
-                              child: Center(
-                                child: Padding(
-                                  padding: EdgeInsets.all(16.0),
-                                  child: Text('No reservations yet'),
+                          ? Card(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32.0),
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.flight_outlined,
+                                        size: 64,
+                                        color: Colors.grey[400]),
+                                    const SizedBox(height: 16),
+                                    Text(
+                                      'No reservations yet',
+                                      style: Theme.of(context).textTheme.titleMedium,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      'Book your first flight to get started',
+                                      style: TextStyle(color: Colors.grey[600]),
+                                    ),
+                                  ],
                                 ),
                               ),
                             )
-                          : ListView.builder(
-                              itemCount: _reservations.length,
-                              itemBuilder: (c, i) {
-                                final r = _reservations[i];
+                          : Column(
+                              children: _reservations.map((r) {
                                 return Card(
-                                  margin: const EdgeInsets.symmetric(vertical: 4),
+                                  margin: const EdgeInsets.only(bottom: 8),
                                   child: ListTile(
                                     leading: const Icon(Icons.flight),
                                     title: Text('${r.from} → ${r.to}'),
-                                    subtitle:
-                                        Text(r.createdAt.toLocal().toString()),
+                                    subtitle: Text(r.createdAt.toLocal().toString()),
                                     onTap: () {
                                       Navigator.of(context).pushNamed(
                                         '/flight_details',
@@ -397,16 +415,17 @@ class _HomePageState extends State<HomePage> {
                                     },
                                   ),
                                 );
-                              },
+                              }).toList(),
                             ),
                     ),
                   ] else ...[
-                    Expanded(
+                    Padding(
+                      padding: const EdgeInsets.all(24),
                       child: Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(24.0),
+                          padding: const EdgeInsets.all(32.0),
                           child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                            mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.airplane_ticket, 
                                   size: 100, 
@@ -435,6 +454,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ],
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
