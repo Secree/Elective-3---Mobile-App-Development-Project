@@ -3,6 +3,27 @@
 .packages
 .pub-cache/
 build/
+.flutter-plugins
+.flutter-plugins-dependencies
+pubspec.lock
+
+# Generated files
+*.g.dart
+*.freezed.dart
+**/generated_plugin_registrant.dart
+**/GeneratedPluginRegistrant.swift
+**/GeneratedPluginRegistrant.h
+**/GeneratedPluginRegistrant.m
+**/generated_plugin_registrant.cc
+**/generated_plugin_registrant.h
+**/generated_plugins.cmake
+flutter_export_environment.sh
+
+# iOS/Mac specific generated files
+ios/Flutter/Generated.xcconfig
+ios/Flutter/flutter_export_environment.sh
+ios/Flutter/ephemeral/
+macos/Flutter/ephemeral/
 
 # Visual Studio Code
 .vscode/
@@ -11,6 +32,15 @@ build/
 .gradle
 /local.properties
 /.idea/
+*.iml
+*.ipr
+*.iws
 
 # Mac
 .DS_Store
+
+# Firebase
+firebase.json
+firestore.rules
+.firebaserc
+firebase-debug.log
