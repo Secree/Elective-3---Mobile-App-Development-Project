@@ -59,15 +59,16 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
         child: Center(
-          child: Card(
-            margin: const EdgeInsets.all(20),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+          child: SingleChildScrollView(
+            child: Card(
+              margin: const EdgeInsets.all(20),
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
                     Text('Login',
                         style: Theme.of(context).textTheme.headlineMedium),
                     const SizedBox(height: 20),
@@ -124,6 +125,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
+        ),
         ),
       ),
     );
