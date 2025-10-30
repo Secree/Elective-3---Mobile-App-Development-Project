@@ -4,6 +4,21 @@ import '../db/reservation_db.dart';
 class FlightDetailsPage extends StatelessWidget {
   const FlightDetailsPage({super.key});
 
+  String _formatDateTime(String dateTimeStr) {
+    try {
+      final dt = DateTime.parse(dateTimeStr);
+      final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+      return '${months[dt.month - 1]} ${dt.day}, ${dt.year} at ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateTimeStr;
+    }
+  }
+
+  String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
   @override
   Widget build(BuildContext context) {
     final reservation =
@@ -27,14 +42,115 @@ class FlightDetailsPage extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text('From: ${reservation.from}',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 8),
-                    Text('To: ${reservation.to}',
-                        style: Theme.of(context).textTheme.titleLarge),
-                    const SizedBox(height: 8),
-                    Text('Reserved on: ${reservation.createdAt.toLocal()}',
-                        style: Theme.of(context).textTheme.bodyMedium),
+                    if (reservation.flightNumber != null) ...[
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.flight,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            reservation.flightNumber!,
+                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: Theme.of(context).colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      if (reservation.airline != null)
+                        Text(
+                          reservation.airline!,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      const Divider(height: 24),
+                    ],
+                    Row(
+                      children: [
+                        const Icon(Icons.flight_takeoff, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'From: ${reservation.from}',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (reservation.departureTime != null) ...[
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 28),
+                        child: Text(
+                          'Departure: ${_formatDateTime(reservation.departureTime!)}',
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Icon(Icons.flight_land, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'To: ${reservation.to}',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (reservation.arrivalTime != null) ...[
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.only(left: 28),
+                        child: Text(
+                          'Arrival: ${_formatDateTime(reservation.arrivalTime!)}',
+                          style: TextStyle(color: Colors.grey[700]),
+                        ),
+                      ),
+                    ],
+                    const Divider(height: 24),
+                    Row(
+                      children: [
+                        const Icon(Icons.calendar_today, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Booked on: ${_formatDate(reservation.createdAt)}',
+                          style: Theme.of(context).textTheme.bodyMedium,
+                        ),
+                      ],
+                    ),
+                    if (reservation.status != null) ...[
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(Icons.info_outline, size: 18),
+                          const SizedBox(width: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.green.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.green),
+                            ),
+                            child: Text(
+                              reservation.status!.toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -69,10 +185,19 @@ class FlightDetailsPage extends StatelessWidget {
                       if (context.mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           const SnackBar(
-                              content: Text('Flight cancelled successfully')),
+                            content: Row(
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.white),
+                                SizedBox(width: 12),
+                                Text('Flight cancelled successfully'),
+                              ],
+                            ),
+                            backgroundColor: Colors.green,
+                            behavior: SnackBarBehavior.floating,
+                          ),
                         );
-                        Navigator.of(context)
-                            .pushNamedAndRemoveUntil('/home', (route) => false);
+                        // Pop back with true to indicate cancellation occurred
+                        Navigator.of(context).pop(true);
                       }
                     }
                   },

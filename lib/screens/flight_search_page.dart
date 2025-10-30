@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/flight.dart';
 import '../services/flight_service.dart';
+import '../db/reservation_db.dart';
 
 class FlightSearchPage extends StatefulWidget {
   const FlightSearchPage({super.key});
@@ -410,62 +411,104 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
         minChildSize: 0.5,
         maxChildSize: 0.95,
         expand: false,
-        builder: (context, scrollController) => SingleChildScrollView(
-          controller: scrollController,
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        builder: (context, scrollController) => _FlightDetailsSheet(
+          flight: flight,
+          scrollController: scrollController,
+        ),
+      ),
+    );
+  }
+}
+
+// Stateful widget for flight details to handle booking
+class _FlightDetailsSheet extends StatefulWidget {
+  final Flight flight;
+  final ScrollController scrollController;
+
+  const _FlightDetailsSheet({
+    required this.flight,
+    required this.scrollController,
+  });
+
+  @override
+  State<_FlightDetailsSheet> createState() => _FlightDetailsSheetState();
+}
+
+class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
+  bool _isBooking = false;
+
+  String _formatDateTime(String dateTimeStr) {
+    try {
+      final dt = DateTime.parse(dateTimeStr);
+      return '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return dateTimeStr;
+    }
+  }
+
+  Future<void> _bookFlight() async {
+    setState(() => _isBooking = true);
+
+    try {
+      // Create a reservation with flight details
+      final reservation = Reservation(
+        from: widget.flight.departureAirport,
+        to: widget.flight.arrivalAirport,
+        flightNumber: widget.flight.flightNumber,
+        airline: widget.flight.airline,
+        departureTime: widget.flight.departureTime,
+        arrivalTime: widget.flight.arrivalTime,
+        status: 'booked',
+      );
+
+      // Save to database
+      await ReservationDatabase.instance.create(reservation);
+
+      if (mounted) {
+        Navigator.pop(context); // Close the bottom sheet
+        
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
               children: [
-                Center(
-                  child: Container(
-                    width: 40,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.grey[300],
-                      borderRadius: BorderRadius.circular(2),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 24),
-                Text(
-                  'Flight Details',
-                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                ),
-                const SizedBox(height: 24),
-                _buildDetailRow('Flight Number', flight.flightNumber),
-                _buildDetailRow('Airline', flight.airline),
-                const Divider(height: 32),
-                _buildDetailRow('Departure', flight.departureAirport),
-                _buildDetailRow('Departure Time', _formatDateTime(flight.departureTime)),
-                if (flight.terminal != null)
-                  _buildDetailRow('Terminal', flight.terminal!),
-                if (flight.gate != null) _buildDetailRow('Gate', flight.gate!),
-                const Divider(height: 32),
-                _buildDetailRow('Arrival', flight.arrivalAirport),
-                _buildDetailRow('Arrival Time', _formatDateTime(flight.arrivalTime)),
-                const Divider(height: 32),
-                _buildDetailRow('Status', flight.status.toUpperCase()),
-                const SizedBox(height: 32),
-                FilledButton.icon(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.pushNamed(context, '/reserve');
-                  },
-                  icon: const Icon(Icons.bookmark_add),
-                  label: const Text('Book This Flight'),
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 50),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    'Flight ${widget.flight.flightNumber} booked successfully!',
                   ),
                 ),
               ],
             ),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
           ),
-        ),
-      ),
-    );
+        );
+
+        // Navigate back to home to show the reservation
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      setState(() => _isBooking = false);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Row(
+              children: [
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 12),
+                Expanded(child: Text('Failed to book flight: $e')),
+              ],
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildDetailRow(String label, String value) {
@@ -494,6 +537,71 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SingleChildScrollView(
+      controller: widget.scrollController,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Flight Details',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 24),
+            _buildDetailRow('Flight Number', widget.flight.flightNumber),
+            _buildDetailRow('Airline', widget.flight.airline),
+            const Divider(height: 32),
+            _buildDetailRow('Departure', widget.flight.departureAirport),
+            _buildDetailRow('Departure Time', _formatDateTime(widget.flight.departureTime)),
+            if (widget.flight.terminal != null)
+              _buildDetailRow('Terminal', widget.flight.terminal!),
+            if (widget.flight.gate != null) 
+              _buildDetailRow('Gate', widget.flight.gate!),
+            const Divider(height: 32),
+            _buildDetailRow('Arrival', widget.flight.arrivalAirport),
+            _buildDetailRow('Arrival Time', _formatDateTime(widget.flight.arrivalTime)),
+            const Divider(height: 32),
+            _buildDetailRow('Status', widget.flight.status.toUpperCase()),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: _isBooking ? null : _bookFlight,
+              icon: _isBooking 
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.bookmark_add),
+              label: Text(_isBooking ? 'Booking...' : 'Book This Flight'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

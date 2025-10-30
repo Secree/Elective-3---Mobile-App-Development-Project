@@ -34,6 +34,11 @@ class _HomePageState extends State<HomePage> {
     await _load();
   }
 
+  String _formatDate(DateTime date) {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  }
+
   Widget _buildFeatureCard(BuildContext context, IconData icon, String title, String description) {
     return Card(
       elevation: 4,
@@ -409,15 +414,55 @@ class _HomePageState extends State<HomePage> {
                               children: _reservations.map((r) {
                                 return Card(
                                   margin: const EdgeInsets.only(bottom: 8),
+                                  elevation: 2,
                                   child: ListTile(
-                                    leading: const Icon(Icons.flight),
-                                    title: Text('${r.from} → ${r.to}'),
-                                    subtitle: Text(r.createdAt.toLocal().toString()),
-                                    onTap: () {
-                                      Navigator.of(context).pushNamed(
+                                    leading: CircleAvatar(
+                                      backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                                      child: Icon(
+                                        Icons.flight,
+                                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                      ),
+                                    ),
+                                    title: Text(
+                                      '${r.from} → ${r.to}',
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        if (r.flightNumber != null && r.airline != null) ...[
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '${r.airline} • ${r.flightNumber}',
+                                            style: TextStyle(
+                                              color: Theme.of(context).colorScheme.primary,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ],
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Booked: ${_formatDate(r.createdAt)}',
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey[600],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    trailing: Icon(
+                                      Icons.chevron_right,
+                                      color: Colors.grey[400],
+                                    ),
+                                    onTap: () async {
+                                      final result = await Navigator.of(context).pushNamed(
                                         '/flight_details',
                                         arguments: r,
                                       );
+                                      // Reload reservations if flight was cancelled
+                                      if (result == true) {
+                                        await _load();
+                                      }
                                     },
                                   ),
                                 );
