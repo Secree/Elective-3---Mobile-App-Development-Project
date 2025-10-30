@@ -28,6 +28,12 @@ class _HomePageState extends State<HomePage> {
     if (res == true) await _load();
   }
 
+  Future<void> _goFlightSearch() async {
+    await Navigator.of(context).pushNamed('/flight_search');
+    // Refresh reservations when returning
+    await _load();
+  }
+
   Widget _buildFeatureCard(BuildContext context, IconData icon, String title, String description) {
     return Card(
       elevation: 4,
@@ -274,7 +280,7 @@ class _HomePageState extends State<HomePage> {
                                       style: TextStyle(fontSize: 18),
                                     ),
                                     onPressed: isLoggedIn 
-                                        ? _goReserve 
+                                        ? _goFlightSearch 
                                         : () {
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               const SnackBar(

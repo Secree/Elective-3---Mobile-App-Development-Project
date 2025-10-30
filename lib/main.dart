@@ -7,6 +7,7 @@ import 'screens/signup_page.dart';
 import 'screens/home_page.dart';
 import 'screens/reserve_page.dart';
 import 'screens/flight_details_page.dart';
+import 'screens/flight_search_page.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
         '/home': (c) => const HomePage(),
         '/reserve': (c) => const ReservePage(),
         '/flight_details': (c) => const FlightDetailsPage(),
+        '/flight_search': (c) => const FlightSearchPage(),
       },
     );
   }
