@@ -1,6 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <application
-        android:label="hello_world_app"
+        android:label="Flight Reserve"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
