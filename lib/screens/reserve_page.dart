@@ -14,14 +14,18 @@ class _ReservePageState extends State<ReservePage> {
   String _to = '';
   bool _loading = false;
 
-  Future<void> _reserve() async {
+  Future<void> _reserve(String? userEmail) async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
     setState(() => _loading = true);
 
     try {
-      final r = Reservation(from: _from, to: _to);
+      final r = Reservation(
+        from: _from, 
+        to: _to,
+        userId: userEmail, // Associate with the logged-in user
+      );
       final saved = await ReservationDatabase.instance.create(r);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
@@ -42,6 +46,9 @@ class _ReservePageState extends State<ReservePage> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the user email from route arguments
+    final userEmail = ModalRoute.of(context)?.settings.arguments as String?;
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -95,7 +102,7 @@ class _ReservePageState extends State<ReservePage> {
                     _loading
                         ? const CircularProgressIndicator()
                         : FilledButton(
-                            onPressed: _reserve,
+                            onPressed: () => _reserve(userEmail),
                             child: const Text('Reserve'),
                           )
                   ],

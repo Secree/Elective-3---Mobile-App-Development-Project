@@ -102,6 +102,9 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Get the user email from route arguments
+    final userEmail = ModalRoute.of(context)?.settings.arguments as String?;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Search Flights'),
@@ -231,7 +234,7 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
                             child: InkWell(
                               borderRadius: BorderRadius.circular(12),
                               onTap: () {
-                                _showFlightDetails(flight);
+                                _showFlightDetails(flight, userEmail);
                               },
                               child: Padding(
                                 padding: const EdgeInsets.all(16),
@@ -399,7 +402,7 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
     );
   }
 
-  void _showFlightDetails(Flight flight) {
+  void _showFlightDetails(Flight flight, String? userEmail) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -414,6 +417,7 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
         builder: (context, scrollController) => _FlightDetailsSheet(
           flight: flight,
           scrollController: scrollController,
+          userEmail: userEmail,
         ),
       ),
     );
@@ -424,10 +428,12 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
 class _FlightDetailsSheet extends StatefulWidget {
   final Flight flight;
   final ScrollController scrollController;
+  final String? userEmail;
 
   const _FlightDetailsSheet({
     required this.flight,
     required this.scrollController,
+    this.userEmail,
   });
 
   @override
@@ -450,7 +456,7 @@ class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
     setState(() => _isBooking = true);
 
     try {
-      // Create a reservation with flight details
+      // Create a reservation with flight details and userId
       final reservation = Reservation(
         from: widget.flight.departureAirport,
         to: widget.flight.arrivalAirport,
@@ -459,6 +465,7 @@ class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
         departureTime: widget.flight.departureTime,
         arrivalTime: widget.flight.arrivalTime,
         status: 'booked',
+        userId: widget.userEmail, // Associate with the logged-in user
       );
 
       // Save to database

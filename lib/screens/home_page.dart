@@ -10,28 +10,32 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   List<Reservation> _reservations = [];
+  String? _loadedForEmail; // Track which user's data is loaded
 
   @override
   void initState() {
     super.initState();
-    _load();
+    // Load will be called in build after getting email from arguments
   }
 
-  Future<void> _load() async {
-    final list = await ReservationDatabase.instance.all();
-    setState(() => _reservations = list);
+  Future<void> _load(String userEmail) async {
+    final list = await ReservationDatabase.instance.getByUserId(userEmail);
+    setState(() {
+      _reservations = list;
+      _loadedForEmail = userEmail; // Track that we loaded for this user
+    });
   }
 
-  Future<void> _goReserve() async {
-    final res = await Navigator.of(context).pushNamed('/reserve');
+  Future<void> _goReserve(String userEmail) async {
+    final res = await Navigator.of(context).pushNamed('/reserve', arguments: userEmail);
     // If reservation succeeded, refresh list
-    if (res == true) await _load();
+    if (res == true) await _load(userEmail);
   }
 
-  Future<void> _goFlightSearch() async {
-    await Navigator.of(context).pushNamed('/flight_search');
+  Future<void> _goFlightSearch(String userEmail) async {
+    await Navigator.of(context).pushNamed('/flight_search', arguments: userEmail);
     // Refresh reservations when returning
-    await _load();
+    await _load(userEmail);
   }
 
   String _formatDate(DateTime date) {
@@ -84,6 +88,11 @@ class _HomePageState extends State<HomePage> {
         ModalRoute.of(context)!.settings.arguments as String?;
     final isLoggedIn = email != null;
     
+    // Load reservations if we haven't loaded for this user yet
+    if (isLoggedIn && _loadedForEmail != email) {
+      Future.microtask(() => _load(email));
+    }
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -94,7 +103,7 @@ class _HomePageState extends State<HomePage> {
           // Menu items: Book, Explore, Help
           TextButton(
             onPressed: isLoggedIn 
-                ? _goReserve 
+                ? () => _goReserve(email) 
                 : () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -285,7 +294,7 @@ class _HomePageState extends State<HomePage> {
                                       style: TextStyle(fontSize: 18),
                                     ),
                                     onPressed: isLoggedIn 
-                                        ? _goFlightSearch 
+                                        ? () => _goFlightSearch(email) 
                                         : () {
                                             ScaffoldMessenger.of(context).showSnackBar(
                                               const SnackBar(
@@ -461,7 +470,7 @@ class _HomePageState extends State<HomePage> {
                                       );
                                       // Reload reservations if flight was cancelled
                                       if (result == true) {
-                                        await _load();
+                                        await _load(email);
                                       }
                                     },
                                   ),

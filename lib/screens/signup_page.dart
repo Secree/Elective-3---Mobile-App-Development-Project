@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../db/user_db.dart';
+import '../utils/security_helper.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -46,6 +47,9 @@ class _SignupPageState extends State<SignupPage> {
     }
     
     try {
+      // Hash the password before storing
+      final hashedPassword = SecurityHelper.hashPassword(_passCtrl.text);
+      
       await db.createUser(
         User(
           firstName: _firstNameCtrl.text.trim(),
@@ -56,7 +60,7 @@ class _SignupPageState extends State<SignupPage> {
           address: _addressCtrl.text.trim(),
           age: int.parse(_ageCtrl.text.trim()),
           email: _emailCtrl.text.trim(),
-          password: _passCtrl.text,
+          password: hashedPassword,
         ),
       );
       setState(() => _loading = false);

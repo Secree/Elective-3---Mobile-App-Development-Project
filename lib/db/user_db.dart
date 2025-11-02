@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../utils/security_helper.dart';
 
 class User {
   final String? id;
@@ -109,7 +110,8 @@ class UserDatabase {
     try {
       final user = await getUserByEmail(email);
       if (user == null) return false;
-      return user.password == password;
+      // Verify the hashed password
+      return SecurityHelper.verifyPassword(password, user.password);
     } catch (e) {
       throw Exception('Error validating user: $e');
     }
