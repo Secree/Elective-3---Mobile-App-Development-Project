@@ -13,6 +13,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   bool _loading = false;
+  String? _loginError;
 
   @override
   void dispose() {
@@ -23,7 +24,10 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _loginError = null; // reset error before checking
+    });
     final db = UserDatabase.instance;
     final ok = await db.validateUser(_emailCtrl.text.trim(), _passCtrl.text);
     setState(() => _loading = false);
@@ -31,8 +35,13 @@ class _LoginPageState extends State<LoginPage> {
       Navigator.of(context)
           .pushReplacementNamed('/home', arguments: _emailCtrl.text.trim());
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Invalid credentials')));
+      // Instead of showing a SnackBar, show an inline validation error under
+      // the password field.
+      setState(() {
+        _loginError = 'Invalid credentials';
+      });
+      // Re-run validators so the password field displays the error.
+      _formKey.currentState!.validate();
     }
   }
 
@@ -91,9 +100,13 @@ class _LoginPageState extends State<LoginPage> {
                         border: OutlineInputBorder(),
                       ),
                       obscureText: true,
-                      validator: (v) => (v == null || v.length < 4)
-                          ? 'Password min 4 chars'
-                          : null,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) return 'Enter password';
+                        // If login attempt failed, show its error here.
+                        if (_loginError != null) return _loginError;
+                        if (v.length < 4) return 'Password min 4 chars';
+                        return null;
+                      },
                     ),
                     const SizedBox(height: 20),
                     _loading
