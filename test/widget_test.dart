@@ -8,7 +8,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:hello_world_app/main.dart';
+import 'package:flight_reserve_grp6/main.dart';
 
 void main() {
   testWidgets('Login page shows', (WidgetTester tester) async {
