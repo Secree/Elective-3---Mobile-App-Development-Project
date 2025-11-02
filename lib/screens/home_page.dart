@@ -26,12 +26,6 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  Future<void> _goReserve(String userEmail) async {
-    final res = await Navigator.of(context).pushNamed('/reserve', arguments: userEmail);
-    // If reservation succeeded, refresh list
-    if (res == true) await _load(userEmail);
-  }
-
   Future<void> _goFlightSearch(String userEmail) async {
     await Navigator.of(context).pushNamed('/flight_search', arguments: userEmail);
     // Refresh reservations when returning
@@ -103,11 +97,11 @@ class _HomePageState extends State<HomePage> {
           // Menu items: Book, Explore, Help
           TextButton(
             onPressed: isLoggedIn 
-                ? () => _goReserve(email) 
+                ? () => _goFlightSearch(email) 
                 : () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Text('Please login to book flights'),
+                        content: Text('Please login to search flights'),
                       ),
                     );
                     Navigator.of(context).pushNamed('/login');
