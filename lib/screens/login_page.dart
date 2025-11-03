@@ -104,7 +104,7 @@ class _LoginPageState extends State<LoginPage> {
                         if (v == null || v.isEmpty) return 'Enter password';
                         // If login attempt failed, show its error here.
                         if (_loginError != null) return _loginError;
-                        if (v.length < 4) return 'Password min 4 chars';
+                        if (v.length < 4) return 'Invalid credentials';
                         return null;
                       },
                     ),
