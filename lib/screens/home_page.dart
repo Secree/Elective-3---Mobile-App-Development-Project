@@ -96,6 +96,7 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
+        automaticallyImplyLeading: false, // disables the back button
         title: const Text('Philippine Airlines'),
         backgroundColor: Colors.transparent,
         elevation: 0,
