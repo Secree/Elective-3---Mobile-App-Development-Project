@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../db/user_db.dart';
+import '../services/auth_service.dart';
 import '../utils/security_helper.dart';
 
 class SignupPage extends StatefulWidget {
@@ -45,30 +46,41 @@ class _SignupPageState extends State<SignupPage> {
       setState(() => _loading = false);
       return;
     }
-    
+
     try {
       // Hash the password before storing
       final hashedPassword = SecurityHelper.hashPassword(_passCtrl.text);
-      
-      await db.createUser(
-        User(
-          firstName: _firstNameCtrl.text.trim(),
-          lastName: _lastNameCtrl.text.trim(),
-          middleInitial: _middleInitialCtrl.text.trim().isEmpty 
-              ? null 
-              : _middleInitialCtrl.text.trim(),
-          address: _addressCtrl.text.trim(),
-          age: int.parse(_ageCtrl.text.trim()),
-          email: _emailCtrl.text.trim(),
-          password: hashedPassword,
-        ),
+
+      final newUser = User(
+        firstName: _firstNameCtrl.text.trim(),
+        lastName: _lastNameCtrl.text.trim(),
+        middleInitial: _middleInitialCtrl.text.trim().isEmpty
+            ? null
+            : _middleInitialCtrl.text.trim(),
+        address: _addressCtrl.text.trim(),
+        age: int.parse(_ageCtrl.text.trim()),
+        email: _emailCtrl.text.trim(),
+        password: hashedPassword,
       );
+
+      // Use AuthService.register to create the user and persist login state
+      final registered = await AuthService.instance.register(newUser);
       setState(() => _loading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully!')),
-        );
-        Navigator.of(context).pop(true); // return to login
+
+      if (registered) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created successfully!')),
+          );
+          // Navigate to home with the newly registered email
+          Navigator.of(context).pushReplacementNamed('/home', arguments: newUser.email);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Unable to register. Email may already exist.')),
+          );
+        }
       }
     } catch (e) {
       setState(() => _loading = false);

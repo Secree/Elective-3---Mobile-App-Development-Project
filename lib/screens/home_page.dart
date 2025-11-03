@@ -253,7 +253,9 @@ class _HomePageState extends State<HomePage> {
                         // Main Headline
                         Text(
                           isLoggedIn
-                              ? 'Welcome Back, ${_userFullName ?? email.split('@')[0]}'
+                              ? (_userFullName != null
+                                  ? 'Welcome Back, $_userFullName'
+                                  : 'Welcome Back')
                               : 'Fly with Philippine Airlines',
                           style: const TextStyle(
                             fontSize: 48,
@@ -312,7 +314,7 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                       const SizedBox(width: 12),
                                       Text(
-                                        'Book Your Flight',
+                                        'Travel Freely in the Skies',
                                         style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -323,7 +325,7 @@ class _HomePageState extends State<HomePage> {
                                   FilledButton.icon(
                                     icon: const Icon(Icons.search, size: 24),
                                     label: const Text(
-                                      'Search Flights',
+                                      'Book Flights',
                                       style: TextStyle(fontSize: 18),
                                     ),
                                     onPressed: isLoggedIn 
