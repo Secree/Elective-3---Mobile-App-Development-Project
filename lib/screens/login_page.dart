@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../db/user_db.dart';
+import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -28,12 +28,16 @@ class _LoginPageState extends State<LoginPage> {
       _loading = true;
       _loginError = null; // reset error before checking
     });
-    final db = UserDatabase.instance;
-    final ok = await db.validateUser(_emailCtrl.text.trim(), _passCtrl.text);
+    
+    final authService = AuthService.instance;
+    final ok = await authService.login(_emailCtrl.text.trim(), _passCtrl.text);
+    
     setState(() => _loading = false);
     if (ok) {
-      Navigator.of(context)
-          .pushReplacementNamed('/home', arguments: _emailCtrl.text.trim());
+      if (mounted) {
+        Navigator.of(context)
+            .pushReplacementNamed('/home', arguments: _emailCtrl.text.trim());
+      }
     } else {
       // Instead of showing a SnackBar, show an inline validation error under
       // the password field.

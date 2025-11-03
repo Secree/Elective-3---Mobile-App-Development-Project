@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../db/reservation_db.dart';
 import '../db/user_db.dart';
+import '../services/auth_service.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,7 +18,21 @@ class _HomePageState extends State<HomePage> {
   @override
   void initState() {
     super.initState();
-    // Load will be called in build after getting email from arguments
+    // Check if user is already logged in from AuthService
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkAuthState();
+    });
+  }
+
+  void _checkAuthState() {
+    final authService = AuthService.instance;
+    if (authService.isAuthenticated && authService.userEmail != null) {
+      // User is logged in, navigate to home with email
+      final email = authService.userEmail!;
+      if (mounted && ModalRoute.of(context)?.settings.arguments == null) {
+        Navigator.of(context).pushReplacementNamed('/home', arguments: email);
+      }
+    }
   }
 
   Future<void> _load(String userEmail) async {
@@ -157,10 +172,13 @@ class _HomePageState extends State<HomePage> {
           if (isLoggedIn) ...[
             PopupMenuButton<String>(
               icon: const Icon(Icons.account_circle),
-              onSelected: (v) {
+              onSelected: (v) async {
                 if (v == 'logout') {
-                  Navigator.of(context)
-                      .pushNamedAndRemoveUntil('/', (route) => false);
+                  await AuthService.instance.logout();
+                  if (mounted) {
+                    Navigator.of(context)
+                        .pushNamedAndRemoveUntil('/', (route) => false);
+                  }
                 }
               },
               itemBuilder: (c) => [

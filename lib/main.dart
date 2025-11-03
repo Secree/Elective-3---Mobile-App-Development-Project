@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+import 'services/auth_service.dart';
 import 'screens/login_page.dart';
 import 'screens/signup_page.dart';
 import 'screens/home_page.dart';
@@ -16,8 +17,12 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     print('✅ Firebase initialized successfully');
+    
+    // Initialize auth service to check for saved login
+    await AuthService.instance.initialize();
+    print('✅ Auth service initialized');
   } catch (e) {
-    print('❌ Firebase initialization error: $e');
+    print('❌ Initialization error: $e');
   }
   runApp(const MyApp());
 }
