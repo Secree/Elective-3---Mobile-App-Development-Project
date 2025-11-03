@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../db/reservation_db.dart';
+import '../db/user_db.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -11,6 +12,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   List<Reservation> _reservations = [];
   String? _loadedForEmail; // Track which user's data is loaded
+  String? _userFullName; // cached user's first + last name
 
   @override
   void initState() {
@@ -24,6 +26,19 @@ class _HomePageState extends State<HomePage> {
       _reservations = list;
       _loadedForEmail = userEmail; // Track that we loaded for this user
     });
+  }
+
+  Future<void> _loadUserName(String userEmail) async {
+    try {
+      final user = await UserDatabase.instance.getUserByEmail(userEmail);
+      if (user != null) {
+        setState(() {
+          _userFullName = '${user.firstName} ${user.lastName}';
+        });
+      }
+    } catch (_) {
+      // ignore errors; leave _userFullName null so UI falls back to email
+    }
   }
 
   Future<void> _goFlightSearch(String userEmail) async {
@@ -82,9 +97,14 @@ class _HomePageState extends State<HomePage> {
         ModalRoute.of(context)!.settings.arguments as String?;
     final isLoggedIn = email != null;
     
-    // Load reservations if we haven't loaded for this user yet
-    if (isLoggedIn && _loadedForEmail != email) {
-      Future.microtask(() => _load(email));
+    // Load reservations and user name if we haven't loaded for this user yet
+    if (isLoggedIn) {
+      if (_loadedForEmail != email) {
+        Future.microtask(() => _load(email));
+      }
+      if (_userFullName == null || _loadedForEmail != email) {
+        Future.microtask(() => _loadUserName(email));
+      }
     }
     
     return Scaffold(
@@ -214,8 +234,8 @@ class _HomePageState extends State<HomePage> {
                       children: [
                         // Main Headline
                         Text(
-                          isLoggedIn 
-                              ? 'Welcome Back, ${email.split('@')[0]}'
+                          isLoggedIn
+                              ? 'Welcome Back, ${_userFullName ?? email.split('@')[0]}'
                               : 'Fly with Philippine Airlines',
                           style: const TextStyle(
                             fontSize: 48,
