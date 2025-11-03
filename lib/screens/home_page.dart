@@ -146,17 +146,13 @@ class _HomePageState extends State<HomePage> {
           ),
           TextButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Explore - Coming Soon!')),
-              );
+              Navigator.of(context).pushNamed('/explore');
             },
             child: const Text('Explore', style: TextStyle(color: Colors.white)),
           ),
           TextButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Help - Coming Soon!')),
-              );
+              Navigator.of(context).pushNamed('/help');
             },
             child: const Text('Help', style: TextStyle(color: Colors.white)),
           ),

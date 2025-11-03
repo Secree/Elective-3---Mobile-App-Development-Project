@@ -6,6 +6,8 @@ import 'services/auth_service.dart';
 import 'screens/login_page.dart';
 import 'screens/signup_page.dart';
 import 'screens/home_page.dart';
+import 'screens/explore_page.dart';
+import 'screens/help_page.dart';
 import 'screens/reserve_page.dart';
 import 'screens/flight_details_page.dart';
 import 'screens/flight_search_page.dart';
@@ -50,6 +52,8 @@ class MyApp extends StatelessWidget {
         '/reserve': (c) => const ReservePage(),
         '/flight_details': (c) => const FlightDetailsPage(),
         '/flight_search': (c) => const FlightSearchPage(),
+        '/explore': (c) => const ExplorePage(),
+        '/help': (c) => const HelpPage(),
       },
     );
   }
