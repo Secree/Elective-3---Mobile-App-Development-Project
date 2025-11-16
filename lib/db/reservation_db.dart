@@ -11,6 +11,10 @@ class Reservation {
   final String? arrivalTime;
   final String? status;
   final String? userId; // Add user association
+  final String? seatNumber;
+  final String? seatClass; // economy, business, first
+  final double? price;
+  final bool? isPaid;
 
   Reservation({
     this.id,
@@ -23,6 +27,10 @@ class Reservation {
     this.arrivalTime,
     this.status,
     this.userId,
+    this.seatNumber,
+    this.seatClass,
+    this.price,
+    this.isPaid,
   }) : createdAt = createdAt ?? DateTime.now();
 
   Map<String, dynamic> toMap() => {
@@ -35,6 +43,10 @@ class Reservation {
         if (arrivalTime != null) 'arrivalTime': arrivalTime,
         if (status != null) 'status': status,
         if (userId != null) 'userId': userId,
+        if (seatNumber != null) 'seatNumber': seatNumber,
+        if (seatClass != null) 'seatClass': seatClass,
+        if (price != null) 'price': price,
+        if (isPaid != null) 'isPaid': isPaid,
       };
 
   @override
@@ -53,6 +65,10 @@ class Reservation {
         arrivalTime: m['arrivalTime'] as String?,
         status: m['status'] as String?,
         userId: m['userId'] as String?,
+        seatNumber: m['seatNumber'] as String?,
+        seatClass: m['seatClass'] as String?,
+        price: m['price'] != null ? (m['price'] as num).toDouble() : null,
+        isPaid: m['isPaid'] as bool?,
       );
 
   Reservation copyWith({
@@ -66,6 +82,10 @@ class Reservation {
     String? arrivalTime,
     String? status,
     String? userId,
+    String? seatNumber,
+    String? seatClass,
+    double? price,
+    bool? isPaid,
   }) {
     return Reservation(
       id: id ?? this.id,
@@ -78,6 +98,10 @@ class Reservation {
       arrivalTime: arrivalTime ?? this.arrivalTime,
       status: status ?? this.status,
       userId: userId ?? this.userId,
+      seatNumber: seatNumber ?? this.seatNumber,
+      seatClass: seatClass ?? this.seatClass,
+      price: price ?? this.price,
+      isPaid: isPaid ?? this.isPaid,
     );
   }
 }

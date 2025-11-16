@@ -68,34 +68,37 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildFeatureCard(BuildContext context, IconData icon, String title, String description) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallScreen = screenHeight < 700;
+    
     return Card(
       elevation: 4,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
         child: Column(
           children: [
             Icon(
               icon,
-              size: 48,
+              size: isSmallScreen ? 36 : 48,
               color: Theme.of(context).colorScheme.primary,
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: isSmallScreen ? 8 : 12),
             Text(
               title,
-              style: const TextStyle(
-                fontSize: 18,
+              style: TextStyle(
+                fontSize: isSmallScreen ? 16 : 18,
                 fontWeight: FontWeight.bold,
               ),
               textAlign: TextAlign.center,
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: isSmallScreen ? 4 : 8),
             Text(
               description,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: isSmallScreen ? 12 : 14,
                 color: Colors.grey[600],
               ),
               textAlign: TextAlign.center,
@@ -111,6 +114,10 @@ class _HomePageState extends State<HomePage> {
     final email =
         ModalRoute.of(context)!.settings.arguments as String?;
     final isLoggedIn = email != null;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenHeight < 700 || screenWidth < 500;
+    final isVerySmallScreen = screenWidth < 400;
     
     // Load reservations and user name if we haven't loaded for this user yet
     if (isLoggedIn) {
@@ -126,48 +133,99 @@ class _HomePageState extends State<HomePage> {
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         automaticallyImplyLeading: false, // disables the back button
-        title: const Text('Philippine Airlines'),
+        title: Text(
+          isVerySmallScreen ? 'PAL' : (isSmallScreen ? 'Philippine Air' : 'Philippine Airlines'),
+          style: TextStyle(fontSize: isVerySmallScreen ? 14 : (isSmallScreen ? 16 : null)),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         actions: [
           // Menu items: Book, Explore, Help
-          TextButton(
-            onPressed: isLoggedIn 
-                ? () => _goFlightSearch(email) 
-                : () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please login to search flights'),
-                      ),
-                    );
-                    Navigator.of(context).pushNamed('/login');
-                  },
-            child: const Text('Book', style: TextStyle(color: Colors.white)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pushNamed('/explore');
-            },
-            child: const Text('Explore', style: TextStyle(color: Colors.white)),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pushNamed('/help');
-            },
-            child: const Text('Help', style: TextStyle(color: Colors.white)),
-          ),
-          // Divider
-          const SizedBox(width: 8),
-          Container(
-            width: 1,
-            height: 24,
-            color: Colors.white.withOpacity(0.5),
-          ),
-          const SizedBox(width: 8),
+          if (isSmallScreen) ...[
+            IconButton(
+              onPressed: isLoggedIn 
+                  ? () => _goFlightSearch(email) 
+                  : () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please login to search flights'),
+                        ),
+                      );
+                      Navigator.of(context).pushNamed('/login');
+                    },
+              icon: const Icon(Icons.search),
+              tooltip: 'Book',
+              padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
+              constraints: BoxConstraints(
+                minWidth: isVerySmallScreen ? 32 : 40,
+                minHeight: isVerySmallScreen ? 32 : 40,
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/explore');
+              },
+              icon: const Icon(Icons.explore),
+              tooltip: 'Explore',
+              padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
+              constraints: BoxConstraints(
+                minWidth: isVerySmallScreen ? 32 : 40,
+                minHeight: isVerySmallScreen ? 32 : 40,
+              ),
+            ),
+            IconButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/help');
+              },
+              icon: const Icon(Icons.help_outline),
+              tooltip: 'Help',
+              padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
+              constraints: BoxConstraints(
+                minWidth: isVerySmallScreen ? 32 : 40,
+                minHeight: isVerySmallScreen ? 32 : 40,
+              ),
+            ),
+          ] else ...[
+            TextButton(
+              onPressed: isLoggedIn 
+                  ? () => _goFlightSearch(email) 
+                  : () {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please login to search flights'),
+                        ),
+                      );
+                      Navigator.of(context).pushNamed('/login');
+                    },
+              child: const Text('Book', style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/explore');
+              },
+              child: const Text('Explore', style: TextStyle(color: Colors.white)),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pushNamed('/help');
+              },
+              child: const Text('Help', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+          // Divider - hide on very small screens
+          if (!isVerySmallScreen) SizedBox(width: isSmallScreen ? 4 : 8),
+          if (!isSmallScreen)
+            Container(
+              width: 1,
+              height: 24,
+              color: Colors.white.withOpacity(0.5),
+            ),
+          if (!isVerySmallScreen) SizedBox(width: isSmallScreen ? 4 : 8),
           // Login/Signup or User menu
           if (isLoggedIn) ...[
             PopupMenuButton<String>(
               icon: const Icon(Icons.account_circle),
+              padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
               onSelected: (v) async {
                 if (v == 'logout') {
                   await AuthService.instance.logout();
@@ -196,24 +254,39 @@ class _HomePageState extends State<HomePage> {
               ],
             ),
           ] else ...[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pushNamed('/login');
-              },
-              child: const Text('Login', style: TextStyle(color: Colors.white)),
-            ),
-            const SizedBox(width: 4),
-            OutlinedButton(
-              onPressed: () {
-                Navigator.of(context).pushNamed('/signup');
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: Colors.white,
-                side: const BorderSide(color: Colors.white),
+            if (isSmallScreen) ...[
+              IconButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed('/login');
+                },
+                icon: const Icon(Icons.login),
+                tooltip: 'Login',
+                padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
+                constraints: BoxConstraints(
+                  minWidth: isVerySmallScreen ? 32 : 40,
+                  minHeight: isVerySmallScreen ? 32 : 40,
+                ),
               ),
-              child: const Text('Sign Up'),
-            ),
-            const SizedBox(width: 8),
+            ] else ...[
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed('/login');
+                },
+                child: const Text('Login', style: TextStyle(color: Colors.white)),
+              ),
+              const SizedBox(width: 4),
+              OutlinedButton(
+                onPressed: () {
+                  Navigator.of(context).pushNamed('/signup');
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white,
+                  side: const BorderSide(color: Colors.white),
+                ),
+                child: const Text('Sign Up'),
+              ),
+            ],
+            if (!isVerySmallScreen) SizedBox(width: isSmallScreen ? 4 : 8),
           ],
         ],
       ),
@@ -243,7 +316,10 @@ class _HomePageState extends State<HomePage> {
                 children: [
                   // Hero Banner Section
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 60),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSmallScreen ? 16 : 24,
+                      vertical: isSmallScreen ? 30 : 60,
+                    ),
                     child: Column(
                       children: [
                         // Main Headline
@@ -253,12 +329,12 @@ class _HomePageState extends State<HomePage> {
                                   ? 'Welcome Back, $_userFullName'
                                   : 'Welcome Back')
                               : 'Fly with Philippine Airlines',
-                          style: const TextStyle(
-                            fontSize: 48,
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 28 : 48,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
                             height: 1.2,
-                            shadows: [
+                            shadows: const [
                               Shadow(
                                 offset: Offset(0, 2),
                                 blurRadius: 8,
@@ -268,17 +344,17 @@ class _HomePageState extends State<HomePage> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 16),
+                        SizedBox(height: isSmallScreen ? 8 : 16),
                         // Subheadline
                         Text(
                           isLoggedIn
                               ? 'Your next adventure awaits'
                               : 'Experience world-class service and comfort',
-                          style: const TextStyle(
-                            fontSize: 20,
+                          style: TextStyle(
+                            fontSize: isSmallScreen ? 14 : 20,
                             color: Colors.white,
                             fontWeight: FontWeight.w300,
-                            shadows: [
+                            shadows: const [
                               Shadow(
                                 offset: Offset(0, 1),
                                 blurRadius: 4,
@@ -288,7 +364,7 @@ class _HomePageState extends State<HomePage> {
                           ),
                           textAlign: TextAlign.center,
                         ),
-                        const SizedBox(height: 40),
+                        SizedBox(height: isSmallScreen ? 20 : 40),
                         // Search/Book Flight Card
                         Container(
                           constraints: const BoxConstraints(maxWidth: 600),
@@ -298,31 +374,34 @@ class _HomePageState extends State<HomePage> {
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Padding(
-                              padding: const EdgeInsets.all(24),
+                              padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
                               child: Column(
                                 children: [
                                   Row(
                                     children: [
                                       Icon(
-                                        Icons.flight_takeoff,
-                                        size: 32,
+                                        Icons.airlines,
+                                        size: isSmallScreen ? 32 : 40,
                                         color: Theme.of(context).colorScheme.primary,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        'Travel Freely in the Skies',
-                                        style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                                          fontWeight: FontWeight.bold,
+                                      SizedBox(width: isSmallScreen ? 8 : 12),
+                                      Expanded(
+                                        child: Text(
+                                          'Travel Freely in the Skies',
+                                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: isSmallScreen ? 16 : null,
+                                          ),
                                         ),
                                       ),
                                     ],
                                   ),
-                                  const SizedBox(height: 24),
+                                  SizedBox(height: isSmallScreen ? 16 : 24),
                                   FilledButton.icon(
-                                    icon: const Icon(Icons.search, size: 24),
-                                    label: const Text(
+                                    icon: Icon(Icons.search, size: isSmallScreen ? 20 : 24),
+                                    label: Text(
                                       'Book Flights',
-                                      style: TextStyle(fontSize: 18),
+                                      style: TextStyle(fontSize: isSmallScreen ? 16 : 18),
                                     ),
                                     onPressed: isLoggedIn 
                                         ? () => _goFlightSearch(email) 
@@ -336,23 +415,23 @@ class _HomePageState extends State<HomePage> {
                                             Navigator.of(context).pushNamed('/login');
                                           },
                                     style: FilledButton.styleFrom(
-                                      padding: const EdgeInsets.symmetric(
-                                        vertical: 20,
-                                        horizontal: 32,
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: isSmallScreen ? 14 : 20,
+                                        horizontal: isSmallScreen ? 24 : 32,
                                       ),
-                                      minimumSize: const Size(double.infinity, 60),
+                                      minimumSize: Size(double.infinity, isSmallScreen ? 48 : 60),
                                       shape: RoundedRectangleBorder(
                                         borderRadius: BorderRadius.circular(12),
                                       ),
                                     ),
                                   ),
                                   if (!isLoggedIn) ...[
-                                    const SizedBox(height: 16),
+                                    SizedBox(height: isSmallScreen ? 12 : 16),
                                     Text(
                                       'Login or sign up to unlock exclusive deals',
                                       style: TextStyle(
                                         color: Colors.grey[600],
-                                        fontSize: 14,
+                                        fontSize: isSmallScreen ? 12 : 14,
                                       ),
                                       textAlign: TextAlign.center,
                                     ),
@@ -368,83 +447,115 @@ class _HomePageState extends State<HomePage> {
                   // Features Section
                   if (!isLoggedIn)
                     Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
                       child: Column(
                         children: [
-                          const Text(
+                          Text(
                             'Why Choose Us',
                             style: TextStyle(
-                              fontSize: 32,
+                              fontSize: isSmallScreen ? 24 : 32,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
                             textAlign: TextAlign.center,
                           ),
-                          const SizedBox(height: 32),
-                          Row(
-                            children: [
-                              Expanded(
-                                child: _buildFeatureCard(
+                          SizedBox(height: isSmallScreen ? 16 : 32),
+                          if (isSmallScreen)
+                            Column(
+                              children: [
+                                _buildFeatureCard(
                                   context,
                                   Icons.verified_user,
                                   'Safe & Secure',
                                   'Your safety is our priority',
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildFeatureCard(
+                                const SizedBox(height: 12),
+                                _buildFeatureCard(
                                   context,
                                   Icons.local_offer,
                                   'Best Prices',
                                   'Competitive fares guaranteed',
                                 ),
-                              ),
-                              const SizedBox(width: 16),
-                              Expanded(
-                                child: _buildFeatureCard(
+                                const SizedBox(height: 12),
+                                _buildFeatureCard(
                                   context,
                                   Icons.support_agent,
                                   '24/7 Support',
                                   'We\'re here to help',
                                 ),
-                              ),
-                            ],
-                          ),
+                              ],
+                            )
+                          else
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: _buildFeatureCard(
+                                    context,
+                                    Icons.verified_user,
+                                    'Safe & Secure',
+                                    'Your safety is our priority',
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _buildFeatureCard(
+                                    context,
+                                    Icons.local_offer,
+                                    'Best Prices',
+                                    'Competitive fares guaranteed',
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: _buildFeatureCard(
+                                    context,
+                                    Icons.support_agent,
+                                    '24/7 Support',
+                                    'We\'re here to help',
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
                     ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: isSmallScreen ? 12 : 20),
                   if (isLoggedIn) ...[
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 16 : 24),
                       child: Text('Ongoing Reservations',
                           style: Theme.of(context).textTheme.titleLarge?.copyWith(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
+                            fontSize: isSmallScreen ? 18 : null,
                           )),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: isSmallScreen ? 6 : 8),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 16 : 24),
                       child: _reservations.isEmpty
                           ? Card(
                               child: Padding(
-                                padding: const EdgeInsets.all(32.0),
+                                padding: EdgeInsets.all(isSmallScreen ? 24.0 : 32.0),
                                 child: Column(
                                   children: [
-                                    Icon(Icons.flight_outlined,
-                                        size: 64,
+                                    Icon(Icons.connecting_airports,
+                                        size: isSmallScreen ? 48 : 64,
                                         color: Colors.grey[400]),
-                                    const SizedBox(height: 16),
+                                    SizedBox(height: isSmallScreen ? 12 : 16),
                                     Text(
                                       'No reservations yet',
-                                      style: Theme.of(context).textTheme.titleMedium,
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                        fontSize: isSmallScreen ? 16 : null,
+                                      ),
                                     ),
-                                    const SizedBox(height: 8),
+                                    SizedBox(height: isSmallScreen ? 6 : 8),
                                     Text(
                                       'Book your first flight to get started',
-                                      style: TextStyle(color: Colors.grey[600]),
+                                      style: TextStyle(
+                                        color: Colors.grey[600],
+                                        fontSize: isSmallScreen ? 12 : 14,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -511,28 +622,31 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ] else ...[
                     Padding(
-                      padding: const EdgeInsets.all(24),
+                      padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
                       child: Card(
                         child: Padding(
-                          padding: const EdgeInsets.all(32.0),
+                          padding: EdgeInsets.all(isSmallScreen ? 24.0 : 32.0),
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(Icons.airplane_ticket, 
-                                  size: 100, 
+                                  size: isSmallScreen ? 64 : 100, 
                                   color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
-                              const SizedBox(height: 16),
+                              SizedBox(height: isSmallScreen ? 12 : 16),
                               Text(
                                 'Book Your Flight Today',
-                                style: Theme.of(context).textTheme.headlineSmall,
+                                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                  fontSize: isSmallScreen ? 20 : null,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 8),
-                              const Text(
+                              SizedBox(height: isSmallScreen ? 6 : 8),
+                              Text(
                                 'Discover amazing destinations and create unforgettable memories.',
+                                style: TextStyle(fontSize: isSmallScreen ? 12 : 14),
                                 textAlign: TextAlign.center,
                               ),
-                              const SizedBox(height: 24),
+                              SizedBox(height: isSmallScreen ? 16 : 24),
                               FilledButton(
                                 onPressed: () {
                                   Navigator.of(context).pushNamed('/login');
@@ -545,7 +659,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                     ),
                   ],
-                  const SizedBox(height: 24),
+                  SizedBox(height: isSmallScreen ? 16 : 24),
                 ],
               ),
             ),

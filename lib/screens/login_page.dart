@@ -51,6 +51,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallScreen = screenHeight < 600;
+    
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -71,20 +74,23 @@ class _LoginPageState extends State<LoginPage> {
             fit: BoxFit.cover,
           ),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Card(
-              margin: const EdgeInsets.all(20),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                    Text('Login',
-                        style: Theme.of(context).textTheme.headlineMedium),
-                    const SizedBox(height: 20),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                      Text('Login',
+                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                            fontSize: isSmallScreen ? 20 : null,
+                          )),
+                      SizedBox(height: isSmallScreen ? 12 : 20),
                     TextFormField(
                       controller: _emailCtrl,
                       decoration: const InputDecoration(
@@ -95,7 +101,7 @@ class _LoginPageState extends State<LoginPage> {
                       validator: (v) =>
                           (v == null || v.isEmpty) ? 'Enter email' : null,
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: isSmallScreen ? 8 : 10),
                     TextFormField(
                       controller: _passCtrl,
                       decoration: const InputDecoration(
@@ -112,7 +118,7 @@ class _LoginPageState extends State<LoginPage> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 20),
+                    SizedBox(height: isSmallScreen ? 12 : 20),
                     _loading
                         ? const CircularProgressIndicator()
                         : Column(
@@ -137,12 +143,13 @@ class _LoginPageState extends State<LoginPage> {
                               )
                             ],
                           )
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         ),
       ),
     );

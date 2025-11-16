@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/flight.dart';
 import '../services/flight_service.dart';
-import '../db/reservation_db.dart';
 
 class FlightSearchPage extends StatefulWidget {
   const FlightSearchPage({super.key});
@@ -114,7 +113,7 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
         children: [
           // Search Form
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(MediaQuery.of(context).size.height < 600 ? 12 : 16),
             color: Theme.of(context).colorScheme.surface,
             child: Column(
               children: [
@@ -197,7 +196,7 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Icon(
-                              Icons.flight_outlined,
+                              Icons.connecting_airports,
                               size: 80,
                               color: Colors.grey[400],
                             ),
@@ -453,69 +452,24 @@ class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
   }
 
   Future<void> _bookFlight() async {
-    setState(() => _isBooking = true);
-
-    try {
-      // Create a reservation with flight details and userId
-      final reservation = Reservation(
-        from: widget.flight.departureAirport,
-        to: widget.flight.arrivalAirport,
-        flightNumber: widget.flight.flightNumber,
-        airline: widget.flight.airline,
-        departureTime: widget.flight.departureTime,
-        arrivalTime: widget.flight.arrivalTime,
-        status: 'booked',
-        userId: widget.userEmail, // Associate with the logged-in user
+    if (widget.userEmail == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please login to book flights')),
       );
-
-      // Save to database
-      await ReservationDatabase.instance.create(reservation);
-
-      if (mounted) {
-        Navigator.pop(context); // Close the bottom sheet
-        
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.check_circle, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Flight ${widget.flight.flightNumber} booked successfully!',
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: Colors.green,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 3),
-          ),
-        );
-
-        // Navigate back to home to show the reservation
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      setState(() => _isBooking = false);
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Row(
-              children: [
-                const Icon(Icons.error, color: Colors.white),
-                const SizedBox(width: 12),
-                Expanded(child: Text('Failed to book flight: $e')),
-              ],
-            ),
-            backgroundColor: Colors.red,
-            behavior: SnackBarBehavior.floating,
-          ),
-        );
-      }
+      return;
     }
+
+    // Close the bottom sheet first
+    Navigator.pop(context);
+    
+    // Navigate to seat selection
+    Navigator.of(context).pushNamed(
+      '/seat_selection',
+      arguments: {
+        'flight': widget.flight,
+        'userEmail': widget.userEmail,
+      },
+    );
   }
 
   Widget _buildDetailRow(String label, String value) {
