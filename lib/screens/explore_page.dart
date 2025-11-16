@@ -38,6 +38,9 @@ class ExplorePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Explore'),
@@ -45,18 +48,19 @@ class ExplorePage extends StatelessWidget {
         elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text('Popular Destinations', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 12),
+            SizedBox(height: isSmallScreen ? 8 : 12),
             GridView.count(
               crossAxisCount: MediaQuery.of(context).size.width > 600 ? 4 : 2,
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
+              crossAxisSpacing: isSmallScreen ? 8 : 12,
+              mainAxisSpacing: isSmallScreen ? 8 : 12,
+              childAspectRatio: isSmallScreen ? 0.85 : 0.75,
               children: _destinations.map((d) {
                 return Card(
                   elevation: 4,

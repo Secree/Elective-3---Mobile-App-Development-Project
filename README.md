@@ -4,6 +4,7 @@ This is a Flutter project that lets users search and reserve flights in the Phil
 
 ## Features
 
+✅ **Onboarding Tutorial** - First-time users see an interactive tutorial showcasing app features
 ✅ **Flight Search** - Browse real-time flight schedules for Philippine airports
 ✅ **User Authentication** - Secure login and signup with Firebase
 ✅ **Flight Reservations** - Book and manage your flight reservations
@@ -37,12 +38,24 @@ flutter run -d android
 
 ## How to Use
 
-1. **Login/Sign Up** - Create an account or login to access flight search
-2. **Search Flights** - Click "Search Flights" on the home page
-3. **Browse Flights** - View available flights between Philippine airports
-4. **Filter Results** - Search by departure and arrival airports (e.g., MNL, CEB, DVO)
-5. **View Details** - Tap any flight to see detailed information
-6. **Book Flight** - Click "Book This Flight" to make a reservation
+1. **First Launch** - New users will see an interactive onboarding tutorial explaining app features
+2. **Login/Sign Up** - Create an account or login to access flight search
+3. **Search Flights** - Click "Search Flights" on the home page
+4. **Browse Flights** - View available flights between Philippine airports
+5. **Filter Results** - Search by departure and arrival airports (e.g., MNL, CEB, DVO)
+6. **View Details** - Tap any flight to see detailed information
+7. **Book Flight** - Click "Book This Flight" to make a reservation
+
+### Testing the Tutorial
+
+To see the onboarding tutorial again after it's been dismissed:
+
+1. Open your browser's developer tools (F12)
+2. Go to Application tab > Local Storage
+3. Delete the `tutorial_completed` key
+4. Refresh the app
+
+Alternatively, use the `OnboardingService.reset()` method in code to clear tutorial status.
 
 ## API Integration (Optional)
 
@@ -62,9 +75,12 @@ lib/
 ├── models/
 │   └── flight.dart           # Flight data model
 ├── services/
-│   └── flight_service.dart   # Flight API service
+│   ├── flight_service.dart   # Flight API service
+│   ├── auth_service.dart     # Authentication service
+│   └── onboarding_service.dart # Tutorial/onboarding state management
 ├── screens/
 │   ├── home_page.dart        # Landing page
+│   ├── tutorial_page.dart    # Onboarding tutorial
 │   ├── flight_search_page.dart # Flight search interface
 │   ├── login_page.dart       # User login
 │   ├── signup_page.dart      # User registration

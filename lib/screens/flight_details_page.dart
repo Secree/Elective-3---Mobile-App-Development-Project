@@ -23,13 +23,15 @@ class FlightDetailsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final reservation =
         ModalRoute.of(context)!.settings.arguments as Reservation;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallScreen = screenHeight < 600;
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Flight to ${reservation.to}'),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(isSmallScreen ? 12.0 : 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -46,7 +48,7 @@ class FlightDetailsPage extends StatelessWidget {
                       Row(
                         children: [
                           Icon(
-                            Icons.flight,
+                            Icons.airlines,
                             color: Theme.of(context).colorScheme.primary,
                           ),
                           const SizedBox(width: 8),
@@ -69,7 +71,7 @@ class FlightDetailsPage extends StatelessWidget {
                     ],
                     Row(
                       children: [
-                        const Icon(Icons.flight_takeoff, size: 20),
+                        const Icon(Icons.connecting_airports, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -111,6 +113,79 @@ class FlightDetailsPage extends StatelessWidget {
                           style: TextStyle(color: Colors.grey[700]),
                         ),
                       ),
+                    ],
+                    const Divider(height: 24),
+                    if (reservation.seatNumber != null) ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.event_seat, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Seat: ${reservation.seatNumber}',
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          if (reservation.seatClass != null) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.blue),
+                              ),
+                              child: Text(
+                                reservation.seatClass!,
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    if (reservation.price != null) ...[
+                      Row(
+                        children: [
+                          const Icon(Icons.attach_money, size: 18),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Price: ₱${reservation.price!.toStringAsFixed(2)}',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: Theme.of(context).colorScheme.primary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (reservation.isPaid == true)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                                border: Border.all(color: Colors.green),
+                              ),
+                              child: const Text(
+                                'PAID',
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
                     ],
                     const Divider(height: 24),
                     Row(
@@ -155,9 +230,11 @@ class FlightDetailsPage extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            SizedBox(height: isSmallScreen ? 16 : 24),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              alignment: WrapAlignment.spaceEvenly,
               children: [
                 ElevatedButton.icon(
                   onPressed: () async {

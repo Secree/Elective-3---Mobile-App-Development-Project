@@ -48,6 +48,8 @@ class _ReservePageState extends State<ReservePage> {
   Widget build(BuildContext context) {
     // Get the user email from route arguments
     final userEmail = ModalRoute.of(context)?.settings.arguments as String?;
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallScreen = screenHeight < 600;
     
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -63,49 +65,55 @@ class _ReservePageState extends State<ReservePage> {
             fit: BoxFit.cover,
           ),
         ),
-        child: Center(
-          child: Card(
-            margin: const EdgeInsets.all(20),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text('Reserve a Flight',
-                        style: Theme.of(context).textTheme.headlineMedium),
-                    const SizedBox(height: 20),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Reserve a Flight',
+                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                              fontSize: isSmallScreen ? 20 : null,
+                            )),
+                        SizedBox(height: isSmallScreen ? 12 : 20),
                     TextFormField(
                       decoration: const InputDecoration(
                         labelText: 'From (city/airport)',
-                        prefixIcon: Icon(Icons.flight_takeoff),
+                        prefixIcon: Icon(Icons.connecting_airports),
                         border: OutlineInputBorder(),
                       ),
                       validator: (v) =>
                           (v == null || v.isEmpty) ? 'Enter origin' : null,
                       onSaved: (v) => _from = v!.trim(),
                     ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      decoration: const InputDecoration(
-                        labelText: 'To (city/airport)',
-                        prefixIcon: Icon(Icons.flight_land),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) => (v == null || v.isEmpty)
-                          ? 'Enter destination'
-                          : null,
-                      onSaved: (v) => _to = v!.trim(),
+                        SizedBox(height: isSmallScreen ? 8 : 10),
+                        TextFormField(
+                          decoration: const InputDecoration(
+                            labelText: 'To (city/airport)',
+                            prefixIcon: Icon(Icons.flight_land),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) => (v == null || v.isEmpty)
+                              ? 'Enter destination'
+                              : null,
+                          onSaved: (v) => _to = v!.trim(),
+                        ),
+                        SizedBox(height: isSmallScreen ? 12 : 20),
+                        _loading
+                            ? const CircularProgressIndicator()
+                            : FilledButton(
+                                onPressed: () => _reserve(userEmail),
+                                child: const Text('Reserve'),
+                              )
+                      ],
                     ),
-                    const SizedBox(height: 20),
-                    _loading
-                        ? const CircularProgressIndicator()
-                        : FilledButton(
-                            onPressed: () => _reserve(userEmail),
-                            child: const Text('Reserve'),
-                          )
-                  ],
+                  ),
                 ),
               ),
             ),
