@@ -13,10 +13,38 @@ class _ReservePageState extends State<ReservePage> {
   String _from = '';
   String _to = '';
   bool _loading = false;
+  int _numberOfSeats = 1;
+  final Set<String> _selectedSeats = {};
+  
+  // Seat layout: 6 seats per row (A-F), 20 rows
+  static const int _totalRows = 20;
+  static const List<String> _seatColumns = ['A', 'B', 'C', 'D', 'E', 'F'];
+  final Set<String> _occupiedSeats = {'1A', '1B', '3C', '5D', '7E', '10F', '12A', '15C'}; // Mock occupied seats
+
+  void _toggleSeat(String seat) {
+    setState(() {
+      if (_selectedSeats.contains(seat)) {
+        _selectedSeats.remove(seat);
+      } else if (_selectedSeats.length < _numberOfSeats) {
+        _selectedSeats.add(seat);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('You can only select $_numberOfSeats seat(s)')),
+        );
+      }
+    });
+  }
 
   Future<void> _reserve(String? userEmail) async {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
+    
+    if (_selectedSeats.length != _numberOfSeats) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Please select exactly $_numberOfSeats seat(s)')),
+      );
+      return;
+    }
 
     setState(() => _loading = true);
 
@@ -24,12 +52,13 @@ class _ReservePageState extends State<ReservePage> {
       final r = Reservation(
         from: _from, 
         to: _to,
-        userId: userEmail, // Associate with the logged-in user
+        userId: userEmail,
+        seatNumber: _selectedSeats.join(', '), // Store multiple seats
       );
-      final saved = await ReservationDatabase.instance.create(r);
+      await ReservationDatabase.instance.create(r);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('Reserved flight from ${saved.from} to ${saved.to}')));
+            content: Text('Reserved ${_selectedSeats.length} seat(s): ${_selectedSeats.join(", ")}')));
         Navigator.of(context).pop(true);
       }
     } catch (e) {
@@ -105,6 +134,121 @@ class _ReservePageState extends State<ReservePage> {
                           onSaved: (v) => _to = v!.trim(),
                         ),
                         SizedBox(height: isSmallScreen ? 12 : 20),
+                        // Number of seats selector
+                        Row(
+                          children: [
+                            const Text('Number of seats:', style: TextStyle(fontSize: 16)),
+                            const SizedBox(width: 12),
+                            IconButton(
+                              icon: const Icon(Icons.remove_circle_outline),
+                              onPressed: _numberOfSeats > 1 ? () {
+                                setState(() {
+                                  _numberOfSeats--;
+                                  // Remove excess selected seats
+                                  while (_selectedSeats.length > _numberOfSeats) {
+                                    _selectedSeats.remove(_selectedSeats.last);
+                                  }
+                                });
+                              } : null,
+                            ),
+                            Text('$_numberOfSeats', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                            IconButton(
+                              icon: const Icon(Icons.add_circle_outline),
+                              onPressed: _numberOfSeats < 6 ? () {
+                                setState(() => _numberOfSeats++);
+                              } : null,
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: isSmallScreen ? 8 : 12),
+                        // Seat picker
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey.shade300),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            children: [
+                              const Text('Select Your Seats', style: TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 8),
+                              // Legend
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  _buildLegend(Colors.grey.shade300, 'Available'),
+                                  const SizedBox(width: 12),
+                                  _buildLegend(Colors.blue, 'Selected'),
+                                  const SizedBox(width: 12),
+                                  _buildLegend(Colors.red.shade300, 'Occupied'),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              // Seat grid
+                              SizedBox(
+                                height: 300,
+                                child: SingleChildScrollView(
+                                  child: Column(
+                                    children: List.generate(_totalRows, (rowIndex) {
+                                      final row = rowIndex + 1;
+                                      return Padding(
+                                        padding: const EdgeInsets.symmetric(vertical: 2),
+                                        child: Row(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Text('$row', style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                            const SizedBox(width: 8),
+                                            ..._seatColumns.map((col) {
+                                              final seatId = '$row$col';
+                                              final isOccupied = _occupiedSeats.contains(seatId);
+                                              final isSelected = _selectedSeats.contains(seatId);
+                                              return Padding(
+                                                padding: const EdgeInsets.symmetric(horizontal: 2),
+                                                child: GestureDetector(
+                                                  onTap: isOccupied ? null : () => _toggleSeat(seatId),
+                                                  child: Container(
+                                                    width: 36,
+                                                    height: 36,
+                                                    decoration: BoxDecoration(
+                                                      color: isOccupied 
+                                                          ? Colors.red.shade300 
+                                                          : isSelected 
+                                                              ? Colors.blue 
+                                                              : Colors.grey.shade300,
+                                                      borderRadius: BorderRadius.circular(4),
+                                                    ),
+                                                    child: Center(
+                                                      child: Text(
+                                                        col,
+                                                        style: TextStyle(
+                                                          fontSize: 12,
+                                                          color: isSelected || isOccupied ? Colors.white : Colors.black,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              );
+                                            }),
+                                          ],
+                                        ),
+                                      );
+                                    }),
+                                  ),
+                                ),
+                              ),
+                              if (_selectedSeats.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Selected: ${_selectedSeats.join(", ")}',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                        SizedBox(height: isSmallScreen ? 12 : 20),
                         _loading
                             ? const CircularProgressIndicator()
                             : FilledButton(
@@ -120,6 +264,23 @@ class _ReservePageState extends State<ReservePage> {
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildLegend(Color color, String label) {
+    return Row(
+      children: [
+        Container(
+          width: 16,
+          height: 16,
+          decoration: BoxDecoration(
+            color: color,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(label, style: const TextStyle(fontSize: 12)),
+      ],
     );
   }
 }

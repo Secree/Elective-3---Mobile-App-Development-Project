@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/flight.dart';
 import '../db/reservation_db.dart';
+import '../services/promo_service.dart';
 
 class SeatSelectionPage extends StatefulWidget {
   const SeatSelectionPage({super.key});
@@ -10,10 +11,13 @@ class SeatSelectionPage extends StatefulWidget {
 }
 
 class _SeatSelectionPageState extends State<SeatSelectionPage> {
-  String? _selectedSeat;
+  Set<String> _selectedSeats = {};
   String _selectedClass = 'Economy';
   Set<String> _occupiedSeats = {};
   bool _loadingSeats = true;
+  int _numberOfSeats = 1;
+  String? _activePromo;
+  bool _isBogoPromo = false;
   
   // Seat configuration: rows 1-3 First Class, 4-8 Business, 9-25 Economy
   final Map<String, List<String>> _seats = {
@@ -38,7 +42,14 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
   void initState() {
     super.initState();
     // Load occupied seats after the first frame
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final args = ModalRoute.of(context)!.settings.arguments as Map<String, dynamic>;
+      final promo = await PromoService.instance.getActivePromo();
+      setState(() {
+        _numberOfSeats = args['numberOfSeats'] as int? ?? 1;
+        _activePromo = promo;
+        _isBogoPromo = promo == PromoService.promoBogo;
+      });
       _loadOccupiedSeats();
     });
   }
@@ -142,7 +153,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                         if (selected) {
                           setState(() {
                             _selectedClass = className;
-                            _selectedSeat = null; // Reset seat when class changes
+                            _selectedSeats.clear(); // Reset seats when class changes
                           });
                         }
                       },
@@ -232,7 +243,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (_selectedSeat != null) ...[
+                  if (_selectedSeats.isNotEmpty) ...[
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -240,23 +251,42 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Seat $_selectedSeat',
+                              '${_selectedSeats.length} of $_numberOfSeats seat(s)',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             Text(
-                              _selectedClass,
+                              'Seats: ${_selectedSeats.join(", ")}',
                               style: Theme.of(context).textTheme.bodyMedium,
+                            ),
+                            Text(
+                              _selectedClass,
+                              style: Theme.of(context).textTheme.bodySmall,
                             ),
                           ],
                         ),
-                        Text(
-                          '₱${_classPrices[_selectedClass]!.toStringAsFixed(2)}',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            if (_activePromo != null) ...[
+                              Text(
+                                '₱${(_classPrices[_selectedClass]! * _selectedSeats.length).toStringAsFixed(2)}',
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  decoration: TextDecoration.lineThrough,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ],
+                            Text(
+                              '₱${PromoService.instance.applyPromo(_activePromo, _classPrices[_selectedClass]!, _selectedSeats.length).finalPrice.toStringAsFixed(2)}',
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: _activePromo != null ? Colors.green.shade700 : Theme.of(context).colorScheme.primary,
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -266,23 +296,30 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                     width: double.infinity,
                     height: 50,
                     child: FilledButton(
-                      onPressed: _selectedSeat == null
+                      onPressed: _selectedSeats.length != (_isBogoPromo ? _numberOfSeats * 2 : _numberOfSeats)
                           ? null
                           : () {
+                              final promoResult = PromoService.instance.applyPromo(
+                                _activePromo,
+                                _classPrices[_selectedClass]!,
+                                _numberOfSeats,
+                              );
                               Navigator.of(context).pushNamed(
                                 '/payment',
                                 arguments: {
                                   'flight': flight,
                                   'userEmail': userEmail,
-                                  'seatNumber': _selectedSeat,
+                                  'seatNumber': _selectedSeats.join(', '),
                                   'seatClass': _selectedClass,
-                                  'price': _classPrices[_selectedClass],
-                                },
-                              );
-                            },
+                                  'price': promoResult.finalPrice,
+                                  'promoCode': _activePromo,
+                                  'numberOfSeats': _isBogoPromo ? _numberOfSeats * 2 : _numberOfSeats,
+                              },
+                            );
+                          },
                       child: Text(
-                        _selectedSeat == null
-                            ? 'Select a seat to continue'
+                        _selectedSeats.length != (_isBogoPromo ? _numberOfSeats * 2 : _numberOfSeats)
+                            ? 'Select ${(_isBogoPromo ? _numberOfSeats * 2 : _numberOfSeats) - _selectedSeats.length} more seat(s)'
                             : 'Continue to Payment',
                         style: const TextStyle(fontSize: 16),
                       ),
@@ -385,7 +422,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
 
   Widget _buildSeat(String seatNumber, double size) {
     final isOccupied = _occupiedSeats.contains(seatNumber);
-    final isSelected = _selectedSeat == seatNumber;
+    final isSelected = _selectedSeats.contains(seatNumber);
     
     Color backgroundColor;
     Color? borderColor;
@@ -406,7 +443,16 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
           ? null
           : () {
               setState(() {
-                _selectedSeat = isSelected ? null : seatNumber;
+                final maxSeats = _isBogoPromo ? _numberOfSeats * 2 : _numberOfSeats;
+                if (isSelected) {
+                  _selectedSeats.remove(seatNumber);
+                } else if (_selectedSeats.length < maxSeats) {
+                  _selectedSeats.add(seatNumber);
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('You can only select $maxSeats seat(s)')),
+                  );
+                }
               });
             },
       child: Container(

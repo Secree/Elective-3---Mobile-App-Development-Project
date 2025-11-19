@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../services/promo_service.dart';
 
 class ExplorePage extends StatefulWidget {
   const ExplorePage({super.key});
@@ -31,9 +32,12 @@ class _ExplorePageState extends State<ExplorePage> {
     },
   ];
 
-  final Map<String, String> _promos = const {
-    '20% off flights this November!':
-        '''Is the holiday rush starting too early? Reward yourself with a well-deserved escape! Fly smart this November by taking advantage of our biggest pre-holiday discount. We are offering a massive 20% OFF on the base fare for ALL Domestic and International Flights, giving you the perfect opportunity to beat the Christmas crowd and enjoy popular destinations like Palawan, Boracay, or Tokyo before peak season prices kick in. The world is calling—and it's 20% cheaper! This offer is valid for a limited booking period, so don't wait!
+  final List<Map<String, dynamic>> _promos = const [
+    {
+      'title': '20% off flights this November!',
+      'code': 'NOV20FLY',
+      'description':
+          '''Is the holiday rush starting too early? Reward yourself with a well-deserved escape! Fly smart this November by taking advantage of our biggest pre-holiday discount. We are offering a massive 20% OFF on the base fare for ALL Domestic and International Flights, giving you the perfect opportunity to beat the Christmas crowd and enjoy popular destinations like Palawan, Boracay, or Tokyo before peak season prices kick in. The world is calling—and it's 20% cheaper! This offer is valid for a limited booking period, so don't wait!
 
   - 20% OFF on the base fare.
   - Valid for flights taken from November 19, 2025 to November 30, 2025.
@@ -41,16 +45,22 @@ class _ExplorePageState extends State<ExplorePage> {
 
 Book your blissful getaway today! Limited seats are available, 
 so use the code and secure your flight now!''',
-    'Buy 1 Get 1 Seat Sale':
-        ''' Invite your favorite travel buddy! Our most exciting seat sale is back—because every adventure is better when shared, and now you can travel for half the price! For a very limited time only, when you book one ticket on select routes, you get the second ticket absolutely FREE. That means you pay for one, and your companion flies for zero base fare! This is perfect for couples, best friends, or family members looking to explore together without breaking the bank.
+    },
+    {
+      'title': 'Buy 1 Get 1 Seat Sale',
+      'code': 'BOGO',
+      'description':
+          ''' Invite your favorite travel buddy! Our most exciting seat sale is back—because every adventure is better when shared, and now you can travel for half the price! For a very limited time only, when you book one ticket on select routes, you get the second ticket absolutely FREE. That means you pay for one, and your companion flies for zero base fare! This is perfect for couples, best friends, or family members looking to explore together without breaking the bank.
 
   - Buy One Seat, Get One FREE.
   - Perfect for sharing the travel cost with a companion.
   - Flights to Cebu, Davao, Singapore, and Hong Kong!
+  - PROMO CODE: BOGO
 
 This BOGO deal won't last long! Click the link below, search for flights marked with the BOGO icon, and find your FREE seat before they're all gone!
 ''',
-  };
+    },
+  ];
 
   final Map<String, String> _tips = const {
     'How to pack light':
@@ -166,33 +176,34 @@ Japan is a stunning year-round destination, but the "best" time really depends o
                 style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Column(
-              children: _promos.entries.map((entry) {
-                final key = entry.key;
-                final value = entry.value;
+              children: _promos.map((promo) {
+                final title = promo['title'] as String;
+                final code = promo['code'] as String;
+                final description = promo['description'] as String;
                 return Column(
                   children: [
                     ListTile(
-                      title: Text(key,
+                      title: Text(title,
                           style: const TextStyle(fontWeight: FontWeight.w600)),
                       trailing: TextButton(
                         onPressed: () {
                           setState(() {
-                            if (_expandedPromos.contains(key)) {
-                              _expandedPromos.remove(key);
+                            if (_expandedPromos.contains(title)) {
+                              _expandedPromos.remove(title);
                             } else {
-                              _expandedPromos.add(key);
+                              _expandedPromos.add(title);
                             }
                           });
                         },
                         child: Text(
-                            _expandedPromos.contains(key) ? 'Close' : 'View'),
+                            _expandedPromos.contains(title) ? 'Close' : 'View'),
                       ),
                       onTap: () {
                         setState(() {
-                          if (_expandedPromos.contains(key)) {
-                            _expandedPromos.remove(key);
+                          if (_expandedPromos.contains(title)) {
+                            _expandedPromos.remove(title);
                           } else {
-                            _expandedPromos.add(key);
+                            _expandedPromos.add(title);
                           }
                         });
                       },
@@ -201,7 +212,7 @@ Japan is a stunning year-round destination, but the "best" time really depends o
                       child: AnimatedSize(
                         duration: const Duration(milliseconds: 200),
                         curve: Curves.easeInOut,
-                        child: _expandedPromos.contains(key)
+                        child: _expandedPromos.contains(title)
                             ? SizedBox(
                                 width: double.infinity,
                                 child: Padding(
@@ -215,17 +226,27 @@ Japan is a stunning year-round destination, but the "best" time really depends o
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(value),
+                                          Text(description),
                                           const SizedBox(height: 8),
                                           Row(
                                             mainAxisAlignment:
                                                 MainAxisAlignment.end,
                                             children: [
                                               FilledButton(
-                                                onPressed: () {
-                                                  Navigator.of(context)
-                                                      .pushNamed(
-                                                          '/flight_search');
+                                                onPressed: () async {
+                                                  // Activate promo
+                                                  await PromoService.instance.activatePromo(code);
+                                                  if (context.mounted) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      SnackBar(
+                                                        content: Text('Promo "$title" activated! Valid for 24 hours.'),
+                                                        backgroundColor: Colors.green,
+                                                        duration: const Duration(seconds: 3),
+                                                      ),
+                                                    );
+                                                    Navigator.of(context)
+                                                        .pushNamed('/flight_search');
+                                                  }
                                                 },
                                                 child: const Text('Redeem'),
                                               ),

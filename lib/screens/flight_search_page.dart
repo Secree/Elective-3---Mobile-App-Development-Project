@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/flight.dart';
 import '../services/flight_service.dart';
+import '../services/promo_service.dart';
 
 class FlightSearchPage extends StatefulWidget {
   const FlightSearchPage({super.key});
@@ -15,12 +16,21 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
   List<Flight> _flights = [];
   bool _loading = false;
   bool _hasSearched = false;
+  String? _activePromo;
 
   @override
   void initState() {
     super.initState();
     // Load all flights on init
     _searchFlights();
+    _loadPromo();
+  }
+
+  Future<void> _loadPromo() async {
+    final promo = await PromoService.instance.getActivePromo();
+    if (mounted) {
+      setState(() => _activePromo = promo);
+    }
   }
 
   @override
@@ -186,6 +196,40 @@ class _FlightSearchPageState extends State<FlightSearchPage> {
             ),
           ),
           const Divider(height: 1),
+          // Promo Banner
+          if (_activePromo != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: Colors.green.shade50,
+              child: Row(
+                children: [
+                  Icon(Icons.local_offer, color: Colors.green.shade700, size: 20),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      '${PromoService.instance.getPromoDescription(_activePromo!)} is active! Your discount will be applied at checkout.',
+                      style: TextStyle(
+                        color: Colors.green.shade900,
+                        fontWeight: FontWeight.w500,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, size: 18, color: Colors.green.shade700),
+                    onPressed: () async {
+                      await PromoService.instance.clearPromo();
+                      setState(() => _activePromo = null);
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Promo removed')),
+                        );
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
           // Results
           Expanded(
             child: _loading
@@ -441,6 +485,7 @@ class _FlightDetailsSheet extends StatefulWidget {
 
 class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
   bool _isBooking = false;
+  int _numberOfSeats = 1;
 
   String _formatDateTime(String dateTimeStr) {
     try {
@@ -462,12 +507,13 @@ class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
     // Close the bottom sheet first
     Navigator.pop(context);
     
-    // Navigate to seat selection
+    // Navigate to seat selection with number of seats
     Navigator.of(context).pushNamed(
       '/seat_selection',
       arguments: {
         'flight': widget.flight,
         'userEmail': widget.userEmail,
+        'numberOfSeats': _numberOfSeats,
       },
     );
   }
@@ -543,7 +589,28 @@ class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
             _buildDetailRow('Arrival Time', _formatDateTime(widget.flight.arrivalTime)),
             const Divider(height: 32),
             _buildDetailRow('Status', widget.flight.status.toUpperCase()),
-            const SizedBox(height: 32),
+            const Divider(height: 32),
+            // Number of seats selector
+            Row(
+              children: [
+                const Text('Number of seats:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.remove_circle_outline),
+                  onPressed: _numberOfSeats > 1 ? () {
+                    setState(() => _numberOfSeats--);
+                  } : null,
+                ),
+                Text('$_numberOfSeats', style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_outline),
+                  onPressed: _numberOfSeats < 6 ? () {
+                    setState(() => _numberOfSeats++);
+                  } : null,
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
             FilledButton.icon(
               onPressed: _isBooking ? null : _bookFlight,
               icon: _isBooking 
