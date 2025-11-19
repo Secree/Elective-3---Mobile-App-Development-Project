@@ -14,6 +14,7 @@ class _HomePageState extends State<HomePage> {
   List<Reservation> _reservations = [];
   String? _loadedForEmail; // Track which user's data is loaded
   String? _userFullName; // cached user's first + last name
+  int _selectedIndex = 0;
 
   @override
   void initState() {
@@ -132,163 +133,13 @@ class _HomePageState extends State<HomePage> {
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
-        automaticallyImplyLeading: false, // disables the back button
-        title: Text(
-          isVerySmallScreen ? 'PAL' : (isSmallScreen ? 'Philippine Air' : 'Philippine Airlines'),
-          style: TextStyle(fontSize: isVerySmallScreen ? 14 : (isSmallScreen ? 16 : null)),
+        automaticallyImplyLeading: false,
+        title: const Text(
+          'Philippine Airlines',
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        actions: [
-          // Menu items: Book, Explore, Help
-          if (isSmallScreen) ...[
-            IconButton(
-              onPressed: isLoggedIn 
-                  ? () => _goFlightSearch(email) 
-                  : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please login to search flights'),
-                        ),
-                      );
-                      Navigator.of(context).pushNamed('/login');
-                    },
-              icon: const Icon(Icons.search),
-              tooltip: 'Book',
-              padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
-              constraints: BoxConstraints(
-                minWidth: isVerySmallScreen ? 32 : 40,
-                minHeight: isVerySmallScreen ? 32 : 40,
-              ),
-            ),
-            IconButton(
-              onPressed: () {
-                Navigator.of(context).pushNamed('/explore');
-              },
-              icon: const Icon(Icons.explore),
-              tooltip: 'Explore',
-              padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
-              constraints: BoxConstraints(
-                minWidth: isVerySmallScreen ? 32 : 40,
-                minHeight: isVerySmallScreen ? 32 : 40,
-              ),
-            ),
-            IconButton(
-              onPressed: () {
-                Navigator.of(context).pushNamed('/help');
-              },
-              icon: const Icon(Icons.help_outline),
-              tooltip: 'Help',
-              padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
-              constraints: BoxConstraints(
-                minWidth: isVerySmallScreen ? 32 : 40,
-                minHeight: isVerySmallScreen ? 32 : 40,
-              ),
-            ),
-          ] else ...[
-            TextButton(
-              onPressed: isLoggedIn 
-                  ? () => _goFlightSearch(email) 
-                  : () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please login to search flights'),
-                        ),
-                      );
-                      Navigator.of(context).pushNamed('/login');
-                    },
-              child: const Text('Book', style: TextStyle(color: Colors.white)),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pushNamed('/explore');
-              },
-              child: const Text('Explore', style: TextStyle(color: Colors.white)),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pushNamed('/help');
-              },
-              child: const Text('Help', style: TextStyle(color: Colors.white)),
-            ),
-          ],
-          // Divider - hide on very small screens
-          if (!isVerySmallScreen) SizedBox(width: isSmallScreen ? 4 : 8),
-          if (!isSmallScreen)
-            Container(
-              width: 1,
-              height: 24,
-              color: Colors.white.withOpacity(0.5),
-            ),
-          if (!isVerySmallScreen) SizedBox(width: isSmallScreen ? 4 : 8),
-          // Login/Signup or User menu
-          if (isLoggedIn) ...[
-            PopupMenuButton<String>(
-              icon: const Icon(Icons.account_circle),
-              padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
-              onSelected: (v) async {
-                if (v == 'logout') {
-                  await AuthService.instance.logout();
-                  if (mounted) {
-                    Navigator.of(context)
-                        .pushNamedAndRemoveUntil('/', (route) => false);
-                  }
-                }
-              },
-              itemBuilder: (c) => [
-                PopupMenuItem(
-                  enabled: false,
-                  child: Text('Logged in as: $email'),
-                ),
-                const PopupMenuDivider(),
-                const PopupMenuItem(
-                  value: 'logout',
-                  child: Row(
-                    children: [
-                      Icon(Icons.logout),
-                      SizedBox(width: 8),
-                      Text('Logout'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ] else ...[
-            if (isSmallScreen) ...[
-              IconButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed('/login');
-                },
-                icon: const Icon(Icons.login),
-                tooltip: 'Login',
-                padding: EdgeInsets.all(isVerySmallScreen ? 4 : 8),
-                constraints: BoxConstraints(
-                  minWidth: isVerySmallScreen ? 32 : 40,
-                  minHeight: isVerySmallScreen ? 32 : 40,
-                ),
-              ),
-            ] else ...[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed('/login');
-                },
-                child: const Text('Login', style: TextStyle(color: Colors.white)),
-              ),
-              const SizedBox(width: 4),
-              OutlinedButton(
-                onPressed: () {
-                  Navigator.of(context).pushNamed('/signup');
-                },
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.white,
-                  side: const BorderSide(color: Colors.white),
-                ),
-                child: const Text('Sign Up'),
-              ),
-            ],
-            if (!isVerySmallScreen) SizedBox(width: isSmallScreen ? 4 : 8),
-          ],
-        ],
       ),
       body: Container(
         decoration: const BoxDecoration(
@@ -664,6 +515,91 @@ class _HomePageState extends State<HomePage> {
               ),
             ),
           ),
+        ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedIndex,
+        onTap: (index) {
+          setState(() => _selectedIndex = index);
+          if (index == 1) {
+            // Book/Search
+            if (isLoggedIn) {
+              _goFlightSearch(email);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(content: Text('Please login to search flights')),
+              );
+              Navigator.of(context).pushNamed('/login');
+            }
+          } else if (index == 2) {
+            // Explore
+            Navigator.of(context).pushNamed('/explore');
+          } else if (index == 3) {
+            // Help
+            Navigator.of(context).pushNamed('/help');
+          } else if (index == 4) {
+            // Account
+            if (isLoggedIn) {
+              _showAccountMenu(context, email);
+            } else {
+              Navigator.of(context).pushNamed('/login');
+            }
+          }
+        },
+        type: BottomNavigationBarType.fixed,
+        selectedItemColor: Theme.of(context).colorScheme.primary,
+        unselectedItemColor: Colors.grey,
+        items: const [
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: 'Home',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: 'Book',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.explore),
+            label: 'Explore',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.help_outline),
+            label: 'Help',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: 'Account',
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAccountMenu(BuildContext context, String? email) {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.person),
+              title: Text(email ?? 'Guest'),
+              subtitle: _userFullName != null ? Text(_userFullName!) : null,
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () async {
+                Navigator.pop(context);
+                await AuthService.instance.logout();
+                if (mounted) {
+                  Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
+                }
+              },
+            ),
+          ],
         ),
       ),
     );

@@ -486,6 +486,7 @@ class _FlightDetailsSheet extends StatefulWidget {
 class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
   bool _isBooking = false;
   int _numberOfSeats = 1;
+  String _selectedClass = 'Economy';
 
   String _formatDateTime(String dateTimeStr) {
     try {
@@ -514,6 +515,7 @@ class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
         'flight': widget.flight,
         'userEmail': widget.userEmail,
         'numberOfSeats': _numberOfSeats,
+        'selectedClass': _selectedClass,
       },
     );
   }
@@ -590,6 +592,36 @@ class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
             const Divider(height: 32),
             _buildDetailRow('Status', widget.flight.status.toUpperCase()),
             const Divider(height: 32),
+            // Class selector
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('Select Class:', style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: ['Economy', 'Business', 'First Class'].map((className) {
+                    final isSelected = _selectedClass == className;
+                    return ChoiceChip(
+                      label: Text(className),
+                      selected: isSelected,
+                      onSelected: (selected) {
+                        if (selected) {
+                          setState(() => _selectedClass = className);
+                        }
+                      },
+                      selectedColor: Theme.of(context).colorScheme.primary,
+                      labelStyle: TextStyle(
+                        color: isSelected ? Colors.white : null,
+                        fontWeight: isSelected ? FontWeight.bold : null,
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
             // Number of seats selector
             Row(
               children: [

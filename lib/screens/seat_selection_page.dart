@@ -47,6 +47,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
       final promo = await PromoService.instance.getActivePromo();
       setState(() {
         _numberOfSeats = args['numberOfSeats'] as int? ?? 1;
+        _selectedClass = args['selectedClass'] as String? ?? 'Economy';
         _activePromo = promo;
         _isBogoPromo = promo == PromoService.promoBogo;
       });
@@ -135,7 +136,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Select Class',
+                  'Selected Class',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -149,19 +150,13 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                     return FilterChip(
                       label: Text('$className\n₱${_classPrices[className]!.toStringAsFixed(0)}'),
                       selected: isSelected,
-                      onSelected: (selected) {
-                        if (selected) {
-                          setState(() {
-                            _selectedClass = className;
-                            _selectedSeats.clear(); // Reset seats when class changes
-                          });
-                        }
-                      },
+                      onSelected: null, // Disabled - class is pre-selected
                       selectedColor: Theme.of(context).colorScheme.primary,
                       labelStyle: TextStyle(
-                        color: isSelected ? Colors.white : null,
+                        color: isSelected ? Colors.white : Colors.grey,
                         fontWeight: isSelected ? FontWeight.bold : null,
                       ),
+                      backgroundColor: isSelected ? null : Colors.grey[200],
                     );
                   }).toList(),
                 ),
