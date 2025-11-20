@@ -23,7 +23,7 @@ void main() async {
       options: DefaultFirebaseOptions.currentPlatform,
     );
     print('✅ Firebase initialized successfully');
-    
+
     // Initialize auth service to check for saved login
     await AuthService.instance.initialize();
     print('✅ Auth service initialized');
@@ -82,9 +82,9 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
   Future<void> _checkTutorialStatus() async {
     // Small delay for splash effect
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     final hasSeenTutorial = await OnboardingService.hasSeen();
-    
+
     if (mounted) {
       if (hasSeenTutorial) {
         Navigator.of(context).pushReplacement(
@@ -100,7 +100,7 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final isSmallScreen = screenHeight < 600;
-    
+
     return Scaffold(
       body: Center(
         child: Column(
@@ -115,8 +115,8 @@ class _InitialLoadingScreenState extends State<InitialLoadingScreen> {
             Text(
               'Flight Reserve',
               style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontSize: isSmallScreen ? 20 : null,
-              ),
+                    fontSize: isSmallScreen ? 20 : null,
+                  ),
             ),
             SizedBox(height: isSmallScreen ? 12 : 20),
             const CircularProgressIndicator(),
