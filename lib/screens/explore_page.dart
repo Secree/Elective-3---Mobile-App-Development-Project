@@ -102,11 +102,71 @@ Japan is a stunning year-round destination, but the "best" time really depends o
 
   final Set<String> _expandedPromos = <String>{};
   final Set<String> _expandedTips = <String>{};
+  final ScrollController _scrollController = ScrollController();
+  final GlobalKey _promosKey = GlobalKey();
+  final GlobalKey _tipsKey = GlobalKey();
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Expand sections after the first frame is built
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final routeArgs = ModalRoute.of(context)?.settings.arguments;
+      if (routeArgs is Map<String, dynamic>) {
+        final expandPromo = routeArgs['expandPromo'] as String?;
+        final expandTip = routeArgs['expandTip'] as String?;
+
+        setState(() {
+          if (expandPromo != null) {
+            _expandedPromos.add(expandPromo);
+          }
+          if (expandTip != null) {
+            _expandedTips.add(expandTip);
+          }
+        });
+
+        // Scroll to the appropriate section after a short delay to allow expansion animation
+        Future.delayed(const Duration(milliseconds: 300), () {
+          if (expandPromo != null && _promosKey.currentContext != null) {
+            Scrollable.ensureVisible(
+              _promosKey.currentContext!,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeInOut,
+            );
+          } else if (expandTip != null && _tipsKey.currentContext != null) {
+            Scrollable.ensureVisible(
+              _tipsKey.currentContext!,
+              duration: const Duration(milliseconds: 500),
+              curve: Curves.easeInOut,
+            );
+          }
+        });
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Get user email from route arguments if available
-    final userEmail = ModalRoute.of(context)?.settings.arguments as String?;
+    // Get arguments from route - can be String (email) or Map with email and expand info
+    final routeArgs = ModalRoute.of(context)?.settings.arguments;
+    String? userEmail;
+    String? expandPromo;
+    String? expandTip;
+
+    if (routeArgs is String) {
+      userEmail = routeArgs;
+    } else if (routeArgs is Map<String, dynamic>) {
+      userEmail = routeArgs['email'] as String?;
+      expandPromo = routeArgs['expandPromo'] as String?;
+      expandTip = routeArgs['expandTip'] as String?;
+    }
+
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
@@ -117,6 +177,7 @@ Japan is a stunning year-round destination, but the "best" time really depends o
         elevation: 0,
       ),
       body: SingleChildScrollView(
+        controller: _scrollController,
         padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -174,8 +235,10 @@ Japan is a stunning year-round destination, but the "best" time really depends o
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('Promos & Deals',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text('Promos & Deals',
+                key: _promosKey,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Column(
               children: _promos.map((promo) {
@@ -238,28 +301,41 @@ Japan is a stunning year-round destination, but the "best" time really depends o
                                                 onPressed: () async {
                                                   // Check if user is logged in
                                                   if (userEmail == null) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
                                                       const SnackBar(
-                                                        content: Text('Please login to redeem offers'),
-                                                        backgroundColor: Colors.orange,
+                                                        content: Text(
+                                                            'Please login to redeem offers'),
+                                                        backgroundColor:
+                                                            Colors.orange,
                                                       ),
                                                     );
-                                                    Navigator.of(context).pushNamed('/login');
+                                                    Navigator.of(context)
+                                                        .pushNamed('/login');
                                                     return;
                                                   }
-                                                  
+
                                                   // Activate promo
-                                                  await PromoService.instance.activatePromo(code);
+                                                  await PromoService.instance
+                                                      .activatePromo(code);
                                                   if (context.mounted) {
-                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                    ScaffoldMessenger.of(
+                                                            context)
+                                                        .showSnackBar(
                                                       SnackBar(
-                                                        content: Text('Promo "$title" activated! Valid for 24 hours.'),
-                                                        backgroundColor: Colors.green,
-                                                        duration: const Duration(seconds: 3),
+                                                        content: Text(
+                                                            'Promo "$title" activated! Valid for 24 hours.'),
+                                                        backgroundColor:
+                                                            Colors.green,
+                                                        duration:
+                                                            const Duration(
+                                                                seconds: 3),
                                                       ),
                                                     );
                                                     // Pass user email when navigating to flight_search
-                                                    Navigator.of(context).pushNamed(
+                                                    Navigator.of(context)
+                                                        .pushNamed(
                                                       '/flight_search',
                                                       arguments: userEmail,
                                                     );
@@ -283,8 +359,10 @@ Japan is a stunning year-round destination, but the "best" time really depends o
               }).toList(),
             ),
             const SizedBox(height: 20),
-            const Text('Travel Tips',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text('Travel Tips',
+                key: _tipsKey,
+                style:
+                    const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Column(
               children: _tips.entries.map((entry) {

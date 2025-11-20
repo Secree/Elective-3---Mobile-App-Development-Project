@@ -42,6 +42,16 @@ class _HomePageState extends State<HomePage> {
     'lib/image/carousel_pic2.jpg',
     'lib/image/carousel_pic3.jpg',
   ];
+  // Promo texts
+  final List<String> _promoTexts = [
+    '20% off flights this November!',
+    'Buy 1 Get 1 Seat Sale',
+  ];
+  // Travel tip texts
+  final List<String> _tipTexts = [
+    'How to pack light',
+    'Best time to travel to Japan',
+  ];
 
   @override
   void initState() {
@@ -553,14 +563,25 @@ class _HomePageState extends State<HomePage> {
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
-                                                    'Promo ${index + 1}',
+                                                    _promoTexts[index],
                                                     style: const TextStyle(
                                                       fontSize: 16,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 8),
                                                   TextButton(
-                                                    onPressed: () {},
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pushNamed(
+                                                        '/explore',
+                                                        arguments: {
+                                                          'email': email,
+                                                          'expandPromo':
+                                                              _promoTexts[
+                                                                  index],
+                                                        },
+                                                      );
+                                                    },
                                                     style: TextButton.styleFrom(
                                                       padding: EdgeInsets.zero,
                                                       minimumSize:
@@ -721,14 +742,24 @@ class _HomePageState extends State<HomePage> {
                                                     CrossAxisAlignment.start,
                                                 children: [
                                                   Text(
-                                                    'Tip ${index + 1}',
+                                                    _tipTexts[index],
                                                     style: const TextStyle(
                                                       fontSize: 16,
                                                     ),
                                                   ),
                                                   const SizedBox(height: 8),
                                                   TextButton(
-                                                    onPressed: () {},
+                                                    onPressed: () {
+                                                      Navigator.of(context)
+                                                          .pushNamed(
+                                                        '/explore',
+                                                        arguments: {
+                                                          'email': email,
+                                                          'expandTip':
+                                                              _tipTexts[index],
+                                                        },
+                                                      );
+                                                    },
                                                     style: TextButton.styleFrom(
                                                       padding: EdgeInsets.zero,
                                                       minimumSize:
