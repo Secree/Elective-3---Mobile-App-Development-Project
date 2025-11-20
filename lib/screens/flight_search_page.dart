@@ -487,6 +487,8 @@ class _FlightDetailsSheetState extends State<_FlightDetailsSheet> {
   bool _isBooking = false;
   int _numberOfSeats = 1;
   String _selectedClass = 'Economy';
+  String? _activePromo;
+  bool _isBogoPromo = false;
 
   String _formatDateTime(String dateTimeStr) {
     try {

@@ -246,7 +246,9 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '${_selectedSeats.length} of $_numberOfSeats seat(s)',
+                              _isBogoPromo 
+                                  ? '${_selectedSeats.length} of ${_numberOfSeats * 2} seat(s)'
+                                  : '${_selectedSeats.length} of $_numberOfSeats seat(s)',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
@@ -259,11 +261,21 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                               _selectedClass,
                               style: Theme.of(context).textTheme.bodySmall,
                             ),
+                            if (_isBogoPromo)
+                              Text(
+                                'BOGO: Pay for ${_selectedSeats.length ~/ 2}, get ${_selectedSeats.length ~/ 2} FREE!',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.green.shade700,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                           ],
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
+                            // Show original price with strikethrough if promo is active
                             if (_activePromo != null) ...[
                               Text(
                                 '₱${(_classPrices[_selectedClass]! * _selectedSeats.length).toStringAsFixed(2)}',
@@ -275,7 +287,25 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                               ),
                             ],
                             Text(
-                              '₱${PromoService.instance.applyPromo(_activePromo, _classPrices[_selectedClass]!, _selectedSeats.length).finalPrice.toStringAsFixed(2)}',
+                              () {
+                                final basePrice = _classPrices[_selectedClass]!;
+                                if (_isBogoPromo) {
+                                  // BOGO: Pay for half of selected seats
+                                  final seatsToPayFor = _selectedSeats.length ~/ 2;
+                                  return '₱${(basePrice * seatsToPayFor).toStringAsFixed(2)}';
+                                } else if (_activePromo != null) {
+                                  // Other promos: apply discount to actual selected seats
+                                  final promoResult = PromoService.instance.applyPromo(
+                                    _activePromo, 
+                                    basePrice, 
+                                    _selectedSeats.length
+                                  );
+                                  return '₱${promoResult.finalPrice.toStringAsFixed(2)}';
+                                } else {
+                                  // No promo: pay for all selected seats
+                                  return '₱${(basePrice * _selectedSeats.length).toStringAsFixed(2)}';
+                                }
+                              }(),
                               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                                 fontWeight: FontWeight.bold,
                                 color: _activePromo != null ? Colors.green.shade700 : Theme.of(context).colorScheme.primary,
@@ -297,7 +327,7 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                               final promoResult = PromoService.instance.applyPromo(
                                 _activePromo,
                                 _classPrices[_selectedClass]!,
-                                _numberOfSeats,
+                                _isBogoPromo ? _numberOfSeats : _selectedSeats.length,
                               );
                               Navigator.of(context).pushNamed(
                                 '/payment',
@@ -308,14 +338,16 @@ class _SeatSelectionPageState extends State<SeatSelectionPage> {
                                   'seatClass': _selectedClass,
                                   'price': promoResult.finalPrice,
                                   'promoCode': _activePromo,
-                                  'numberOfSeats': _isBogoPromo ? _numberOfSeats * 2 : _numberOfSeats,
-                              },
-                            );
-                          },
+                                  'numberOfSeats': _selectedSeats.length,
+                                },
+                              );
+                            },
                       child: Text(
                         _selectedSeats.length != (_isBogoPromo ? _numberOfSeats * 2 : _numberOfSeats)
                             ? 'Select ${(_isBogoPromo ? _numberOfSeats * 2 : _numberOfSeats) - _selectedSeats.length} more seat(s)'
-                            : 'Continue to Payment',
+                            : _isBogoPromo 
+                                ? 'Continue to Payment (Pay for $_numberOfSeats only!)'
+                                : 'Continue to Payment',
                         style: const TextStyle(fontSize: 16),
                       ),
                     ),
