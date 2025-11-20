@@ -14,6 +14,7 @@ class _LoginPageState extends State<LoginPage> {
   final _passCtrl = TextEditingController();
   bool _loading = false;
   String? _loginError;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
@@ -104,12 +105,22 @@ class _LoginPageState extends State<LoginPage> {
                     SizedBox(height: isSmallScreen ? 8 : 10),
                     TextFormField(
                       controller: _passCtrl,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock),
-                        border: OutlineInputBorder(),
+                        prefixIcon: const Icon(Icons.lock),
+                        border: const OutlineInputBorder(),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _obscurePassword = !_obscurePassword;
+                            });
+                          },
+                        ),
                       ),
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       validator: (v) {
                         if (v == null || v.isEmpty) return 'Enter password';
                         // If login attempt failed, show its error here.
