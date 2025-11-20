@@ -105,6 +105,8 @@ Japan is a stunning year-round destination, but the "best" time really depends o
 
   @override
   Widget build(BuildContext context) {
+    // Get user email from route arguments if available
+    final userEmail = ModalRoute.of(context)?.settings.arguments as String?;
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
@@ -234,6 +236,18 @@ Japan is a stunning year-round destination, but the "best" time really depends o
                                             children: [
                                               FilledButton(
                                                 onPressed: () async {
+                                                  // Check if user is logged in
+                                                  if (userEmail == null) {
+                                                    ScaffoldMessenger.of(context).showSnackBar(
+                                                      const SnackBar(
+                                                        content: Text('Please login to redeem offers'),
+                                                        backgroundColor: Colors.orange,
+                                                      ),
+                                                    );
+                                                    Navigator.of(context).pushNamed('/login');
+                                                    return;
+                                                  }
+                                                  
                                                   // Activate promo
                                                   await PromoService.instance.activatePromo(code);
                                                   if (context.mounted) {
@@ -244,8 +258,11 @@ Japan is a stunning year-round destination, but the "best" time really depends o
                                                         duration: const Duration(seconds: 3),
                                                       ),
                                                     );
-                                                    Navigator.of(context)
-                                                        .pushNamed('/flight_search');
+                                                    // Pass user email when navigating to flight_search
+                                                    Navigator.of(context).pushNamed(
+                                                      '/flight_search',
+                                                      arguments: userEmail,
+                                                    );
                                                   }
                                                 },
                                                 child: const Text('Redeem'),

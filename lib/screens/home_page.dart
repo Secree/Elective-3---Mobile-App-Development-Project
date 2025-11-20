@@ -1163,8 +1163,8 @@ class _HomePageState extends State<HomePage> {
               Navigator.of(context).pushNamed('/login');
             }
           } else if (index == 2) {
-            // Explore
-            Navigator.of(context).pushNamed('/explore');
+            // Explore - pass user email if logged in
+            Navigator.of(context).pushNamed('/explore', arguments: email);
           } else if (index == 3) {
             // Help
             Navigator.of(context).pushNamed('/help');
