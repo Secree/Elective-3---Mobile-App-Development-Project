@@ -23,6 +23,13 @@ class _HelpPageState extends State<HelpPage> {
     },
   ];
 
+  
+  final Map<String,String> _contact = {
+    'Email Us' : 'Contact our support team at support@philippineairlines.com\nWe typically respond within 24 hours.',
+    'Call Hotline' : 'Philippines: (+63) 2-8855-8888\nInternational: +1-800-435-9725\nAvailable 24/7',
+    'Send Feedback' : 'We value your feedback! Share your experience, suggestions, or concerns.\nYour input helps us improve our service.'
+  };
+
 
   final Map<String, String> _policies = const {
     'Refund policy': '''Refunds are processed according to the fare rules of your ticket:
@@ -83,37 +90,48 @@ Self-service kiosks available at major airports.''',
             const SizedBox(height: 16),
             const Text('Contact Support', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            ExpansionTile(
-              title: const Text('Email us'),
-              leading: const Icon(Icons.email),
-              children: const [
+            // ExpansionTile(
+            //   title: const Text('Email us'),
+            //   leading: const Icon(Icons.email),
+            //   children: const [
+            //     Padding(
+            //       padding: EdgeInsets.all(12),
+            //       child: Text('Contact our support team at support@philippineairlines.com\nWe typically respond within 24 hours.'),
+            //     ),
+            //   ],
+            // ),
+            // ExpansionTile(
+            //   title: const Text('Call hotline'),
+            //   leading: const Icon(Icons.call),
+            //   children: const [
+            //     Padding(
+            //       padding: EdgeInsets.all(12),
+            //       child: Text('Philippines: (+63) 2-8855-8888\nInternational: +1-800-435-9725\nAvailable 24/7'),
+            //     ),
+            //   ],
+            // ),
+            // ExpansionTile(
+            //   title: const Text('Send feedback'),
+            //   leading: const Icon(Icons.feedback),
+            //   children: const [
+            //     Padding(
+            //       padding: EdgeInsets.all(12),
+            //       child: Text('We value your feedback! Share your experience, suggestions, or concerns.\nYour input helps us improve our service.'),
+            //     ),
+            //   ],
+            // ),
+            // const SizedBox(height: 16),
+            ..._contact.entries.map((entry) => ExpansionTile(
+              title: Text(entry.key),
+              leading: const Icon(Icons.info_outline),
+              children: [
                 Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text('Contact our support team at support@philippineairlines.com\nWe typically respond within 24 hours.'),
-                ),
-              ],
-            ),
-            ExpansionTile(
-              title: const Text('Call hotline'),
-              leading: const Icon(Icons.call),
-              children: const [
-                Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text('Philippines: (+63) 2-8855-8888\nInternational: +1-800-435-9725\nAvailable 24/7'),
-                ),
-              ],
-            ),
-            ExpansionTile(
-              title: const Text('Send feedback'),
-              leading: const Icon(Icons.feedback),
-              children: const [
-                Padding(
-                  padding: EdgeInsets.all(12),
-                  child: Text('We value your feedback! Share your experience, suggestions, or concerns.\nYour input helps us improve our service.'),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
+                  padding: const EdgeInsets.all(12),
+                  child: Text(entry.value)
+                  ),
+                ],
+              )),
+              const SizedBox(height:16),
             const Text('Policies & Guides', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             ..._policies.entries.map((entry) => ExpansionTile(
