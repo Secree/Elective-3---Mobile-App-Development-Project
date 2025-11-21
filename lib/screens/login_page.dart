@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../db/user_db.dart';
+import 'package:flutter/services.dart';
+import '../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -12,39 +13,60 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
+  final _emailFocus = FocusNode();
+  final _passFocus = FocusNode();
   bool _loading = false;
+  String? _loginError;
+  bool _obscurePassword = true;
 
   @override
   void dispose() {
     _emailCtrl.dispose();
     _passCtrl.dispose();
+    _emailFocus.dispose();
+    _passFocus.dispose();
     super.dispose();
   }
 
   Future<void> _login() async {
     if (!_formKey.currentState!.validate()) return;
-    setState(() => _loading = true);
-    final db = UserDatabase.instance;
-    final ok = await db.validateUser(_emailCtrl.text.trim(), _passCtrl.text);
+    setState(() {
+      _loading = true;
+      _loginError = null; // reset error before checking
+    });
+
+    final authService = AuthService.instance;
+    final ok = await authService.login(_emailCtrl.text.trim(), _passCtrl.text);
+
     setState(() => _loading = false);
     if (ok) {
-      Navigator.of(context)
-          .pushReplacementNamed('/home', arguments: _emailCtrl.text.trim());
+      if (mounted) {
+        Navigator.of(context)
+            .pushReplacementNamed('/home', arguments: _emailCtrl.text.trim());
+      }
     } else {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Invalid credentials')));
+      // Instead of showing a SnackBar, show an inline validation error under
+      // the password field.
+      setState(() {
+        _loginError = 'Invalid credentials';
+      });
+      // Re-run validators so the password field displays the error.
+      _formKey.currentState!.validate();
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallScreen = screenHeight < 600;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context).pushReplacementNamed('/');
+            Navigator.of(context).pop();
           },
         ),
         title: const Text('Login'),
@@ -58,74 +80,101 @@ class _LoginPageState extends State<LoginPage> {
             fit: BoxFit.cover,
           ),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Card(
-              margin: const EdgeInsets.all(20),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                    Text('Login',
-                        style: Theme.of(context).textTheme.headlineMedium),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _emailCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) =>
-                          (v == null || v.isEmpty) ? 'Enter email' : null,
-                    ),
-                    const SizedBox(height: 10),
-                    TextFormField(
-                      controller: _passCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock),
-                        border: OutlineInputBorder(),
-                      ),
-                      obscureText: true,
-                      validator: (v) => (v == null || v.length < 4)
-                          ? 'Password min 4 chars'
-                          : null,
-                    ),
-                    const SizedBox(height: 20),
-                    _loading
-                        ? const CircularProgressIndicator()
-                        : Column(
-                            children: [
-                              FilledButton(
-                                onPressed: _login,
-                                child: const Text('Login'),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Login',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  fontSize: isSmallScreen ? 20 : null,
+                                )),
+                        SizedBox(height: isSmallScreen ? 12 : 20),
+                        TextFormField(
+                          controller: _emailCtrl,
+                          focusNode: _emailFocus,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.email),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) =>
+                              (v == null || v.isEmpty) ? 'Enter email' : null,
+                          onFieldSubmitted: (_) => _passFocus.requestFocus(),
+                        ),
+                        SizedBox(height: isSmallScreen ? 8 : 10),
+                        TextFormField(
+                          controller: _passCtrl,
+                          focusNode: _passFocus,
+                          decoration: InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: const Icon(Icons.lock),
+                            border: const OutlineInputBorder(),
+                            suffixIcon: IconButton(
+                              icon: Icon(
+                                _obscurePassword
+                                    ? Icons.visibility_off
+                                    : Icons.visibility,
                               ),
-                              TextButton(
-                                onPressed: () async {
-                                  final res = await Navigator.of(context)
-                                      .pushNamed('/signup');
-                                  if (res == true) {
-                                    ScaffoldMessenger.of(context)
-                                        .showSnackBar(const SnackBar(
-                                      content: Text(
-                                          'Account created, please login'),
-                                    ));
-                                  }
-                                },
-                                child: const Text('Create an account'),
+                              onPressed: () {
+                                setState(() {
+                                  _obscurePassword = !_obscurePassword;
+                                });
+                              },
+                            ),
+                          ),
+                          obscureText: _obscurePassword,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) return 'Enter password';
+                            // If login attempt failed, show its error here.
+                            if (_loginError != null) return _loginError;
+                            if (v.length < 4) return 'Invalid credentials';
+                            return null;
+                          },
+                          onFieldSubmitted: (_) => _login(),
+                        ),
+                        SizedBox(height: isSmallScreen ? 12 : 20),
+                        _loading
+                            ? const CircularProgressIndicator()
+                            : Column(
+                                children: [
+                                  FilledButton(
+                                    onPressed: _login,
+                                    child: const Text('Login'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () async {
+                                      final res = await Navigator.of(context)
+                                          .pushNamed('/signup');
+                                      if (res == true) {
+                                        ScaffoldMessenger.of(context)
+                                            .showSnackBar(const SnackBar(
+                                          content: Text(
+                                              'Account created, please login'),
+                                        ));
+                                      }
+                                    },
+                                    child: const Text('Create an account'),
+                                  )
+                                ],
                               )
-                            ],
-                          )
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         ),
       ),
     );

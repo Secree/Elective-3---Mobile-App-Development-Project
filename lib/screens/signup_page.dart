@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../db/user_db.dart';
+import '../services/auth_service.dart';
+import '../utils/security_helper.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -18,6 +21,14 @@ class _SignupPageState extends State<SignupPage> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmPassCtrl = TextEditingController();
+  final _firstNameFocus = FocusNode();
+  final _lastNameFocus = FocusNode();
+  final _middleInitialFocus = FocusNode();
+  final _addressFocus = FocusNode();
+  final _ageFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _passFocus = FocusNode();
+  final _confirmPassFocus = FocusNode();
   bool _loading = false;
 
   @override
@@ -30,6 +41,14 @@ class _SignupPageState extends State<SignupPage> {
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _confirmPassCtrl.dispose();
+    _firstNameFocus.dispose();
+    _lastNameFocus.dispose();
+    _middleInitialFocus.dispose();
+    _addressFocus.dispose();
+    _ageFocus.dispose();
+    _emailFocus.dispose();
+    _passFocus.dispose();
+    _confirmPassFocus.dispose();
     super.dispose();
   }
 
@@ -44,27 +63,43 @@ class _SignupPageState extends State<SignupPage> {
       setState(() => _loading = false);
       return;
     }
-    
+
     try {
-      await db.createUser(
-        User(
-          firstName: _firstNameCtrl.text.trim(),
-          lastName: _lastNameCtrl.text.trim(),
-          middleInitial: _middleInitialCtrl.text.trim().isEmpty 
-              ? null 
-              : _middleInitialCtrl.text.trim(),
-          address: _addressCtrl.text.trim(),
-          age: int.parse(_ageCtrl.text.trim()),
-          email: _emailCtrl.text.trim(),
-          password: _passCtrl.text,
-        ),
+      // Hash the password before storing
+      final hashedPassword = SecurityHelper.hashPassword(_passCtrl.text);
+
+      final newUser = User(
+        firstName: _firstNameCtrl.text.trim(),
+        lastName: _lastNameCtrl.text.trim(),
+        middleInitial: _middleInitialCtrl.text.trim().isEmpty
+            ? null
+            : _middleInitialCtrl.text.trim(),
+        address: _addressCtrl.text.trim(),
+        age: int.parse(_ageCtrl.text.trim()),
+        email: _emailCtrl.text.trim(),
+        password: hashedPassword,
       );
+
+      // Use AuthService.register to create the user and persist login state
+      final registered = await AuthService.instance.register(newUser);
       setState(() => _loading = false);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Account created successfully!')),
-        );
-        Navigator.of(context).pop(true); // return to login
+
+      if (registered) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Account created successfully!')),
+          );
+          // Navigate to home with the newly registered email
+          Navigator.of(context)
+              .pushReplacementNamed('/home', arguments: newUser.email);
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+                content: Text('Unable to register. Email may already exist.')),
+          );
+        }
       }
     } catch (e) {
       setState(() => _loading = false);
@@ -78,13 +113,16 @@ class _SignupPageState extends State<SignupPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final isSmallScreen = screenHeight < 700;
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () {
-            Navigator.of(context).pushReplacementNamed('/');
+            Navigator.of(context).pop();
           },
         ),
         title: const Text('Sign Up'),
@@ -98,169 +136,199 @@ class _SignupPageState extends State<SignupPage> {
             fit: BoxFit.cover,
           ),
         ),
-        child: Center(
-          child: SingleChildScrollView(
-            child: Card(
-              margin: const EdgeInsets.all(20),
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                    Text('Create Account',
-                        style: Theme.of(context).textTheme.headlineMedium),
-                    const SizedBox(height: 20),
-                    // First Name
-                    TextFormField(
-                      controller: _firstNameCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'First Name',
-                        prefixIcon: Icon(Icons.person),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Enter first name' : null,
-                    ),
-                    const SizedBox(height: 10),
-                    // Last Name
-                    TextFormField(
-                      controller: _lastNameCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Last Name',
-                        prefixIcon: Icon(Icons.person_outline),
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Enter last name' : null,
-                    ),
-                    const SizedBox(height: 10),
-                    // Middle Initial (Optional)
-                    TextFormField(
-                      controller: _middleInitialCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Middle Initial (Optional)',
-                        prefixIcon: Icon(Icons.text_fields),
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLength: 1,
-                    ),
-                    const SizedBox(height: 10),
-                    // Address
-                    TextFormField(
-                      controller: _addressCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Address',
-                        prefixIcon: Icon(Icons.home),
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                      validator: (v) =>
-                          (v == null || v.trim().isEmpty) ? 'Enter address' : null,
-                    ),
-                    const SizedBox(height: 10),
-                    // Age
-                    TextFormField(
-                      controller: _ageCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Age',
-                        prefixIcon: Icon(Icons.calendar_today),
-                        border: OutlineInputBorder(),
-                        helperText: 'Must be 18 or older',
-                      ),
-                      keyboardType: TextInputType.number,
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Enter age';
-                        }
-                        final age = int.tryParse(v.trim());
-                        if (age == null) {
-                          return 'Enter a valid number';
-                        }
-                        if (age < 18) {
-                          return 'Must be at least 18 years old';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    // Email
-                    TextFormField(
-                      controller: _emailCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email),
-                        border: OutlineInputBorder(),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      validator: (v) {
-                        if (v == null || v.trim().isEmpty) {
-                          return 'Enter email';
-                        }
-                        if (!v.contains('@') || !v.contains('.')) {
-                          return 'Enter a valid email';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 10),
-                    // Password
-                    TextFormField(
-                      controller: _passCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock),
-                        border: OutlineInputBorder(),
-                      ),
-                      obscureText: true,
-                      validator: (v) => (v == null || v.length < 4)
-                          ? 'Password must be at least 4 characters'
-                          : null,
-                    ),
-                    const SizedBox(height: 10),
-                    // Confirm Password
-                    TextFormField(
-                      controller: _confirmPassCtrl,
-                      decoration: const InputDecoration(
-                        labelText: 'Confirm Password',
-                        prefixIcon: Icon(Icons.lock_outline),
-                        border: OutlineInputBorder(),
-                      ),
-                      obscureText: true,
-                      validator: (v) {
-                        if (v == null || v.isEmpty) {
-                          return 'Confirm your password';
-                        }
-                        if (v != _passCtrl.text) {
-                          return 'Passwords do not match';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    _loading
-                        ? const CircularProgressIndicator()
-                        : FilledButton(
-                            onPressed: _signup,
-                            style: FilledButton.styleFrom(
-                              minimumSize: const Size(double.infinity, 50),
-                            ),
-                            child: const Text('Create account'),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(isSmallScreen ? 12 : 20),
+              child: Card(
+                child: Padding(
+                  padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text('Create Account',
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  fontSize: isSmallScreen ? 20 : null,
+                                )),
+                        SizedBox(height: isSmallScreen ? 12 : 20),
+                        // First Name
+                        TextFormField(
+                          controller: _firstNameCtrl,
+                          focusNode: _firstNameFocus,
+                          decoration: const InputDecoration(
+                            labelText: 'First Name',
+                            prefixIcon: Icon(Icons.person),
+                            border: OutlineInputBorder(),
                           ),
-                    const SizedBox(height: 10),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.of(context).pop();
-                      },
-                      child: const Text('Already have an account? Login'),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Enter first name'
+                              : null,
+                          onFieldSubmitted: (_) =>
+                              _lastNameFocus.requestFocus(),
+                        ),
+                        SizedBox(height: isSmallScreen ? 8 : 10),
+                        // Last Name
+                        TextFormField(
+                          controller: _lastNameCtrl,
+                          focusNode: _lastNameFocus,
+                          decoration: const InputDecoration(
+                            labelText: 'Last Name',
+                            prefixIcon: Icon(Icons.person_outline),
+                            border: OutlineInputBorder(),
+                          ),
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Enter last name'
+                              : null,
+                          onFieldSubmitted: (_) =>
+                              _middleInitialFocus.requestFocus(),
+                        ),
+                        SizedBox(height: isSmallScreen ? 8 : 10),
+                        // Middle Initial (Optional)
+                        TextFormField(
+                          controller: _middleInitialCtrl,
+                          focusNode: _middleInitialFocus,
+                          decoration: const InputDecoration(
+                            labelText: 'Middle Initial (Optional)',
+                            prefixIcon: Icon(Icons.text_fields),
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLength: 1,
+                          onFieldSubmitted: (_) => _addressFocus.requestFocus(),
+                        ),
+                        const SizedBox(height: 10),
+                        // Address
+                        TextFormField(
+                          controller: _addressCtrl,
+                          focusNode: _addressFocus,
+                          decoration: const InputDecoration(
+                            labelText: 'Address',
+                            prefixIcon: Icon(Icons.home),
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLines: 2,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Enter address'
+                              : null,
+                          onFieldSubmitted: (_) => _ageFocus.requestFocus(),
+                        ),
+                        const SizedBox(height: 10),
+                        // Age
+                        TextFormField(
+                          controller: _ageCtrl,
+                          focusNode: _ageFocus,
+                          decoration: const InputDecoration(
+                            labelText: 'Age',
+                            prefixIcon: Icon(Icons.calendar_today),
+                            border: OutlineInputBorder(),
+                            helperText: 'Must be 18 or older',
+                          ),
+                          keyboardType: TextInputType.number,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Enter age';
+                            }
+                            final age = int.tryParse(v.trim());
+                            if (age == null) {
+                              return 'Enter a valid number';
+                            }
+                            if (age < 18) {
+                              return 'Must be at least 18 years old';
+                            }
+                            return null;
+                          },
+                          onFieldSubmitted: (_) => _emailFocus.requestFocus(),
+                        ),
+                        const SizedBox(height: 10),
+                        // Email
+                        TextFormField(
+                          controller: _emailCtrl,
+                          focusNode: _emailFocus,
+                          decoration: const InputDecoration(
+                            labelText: 'Email',
+                            prefixIcon: Icon(Icons.email),
+                            border: OutlineInputBorder(),
+                          ),
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (v) {
+                            if (v == null || v.trim().isEmpty) {
+                              return 'Enter email';
+                            }
+                            if (!v.contains('@') || !v.contains('.')) {
+                              return 'Enter a valid email';
+                            }
+                            return null;
+                          },
+                          onFieldSubmitted: (_) => _passFocus.requestFocus(),
+                        ),
+                        const SizedBox(height: 10),
+                        // Password
+                        TextFormField(
+                          controller: _passCtrl,
+                          focusNode: _passFocus,
+                          decoration: const InputDecoration(
+                            labelText: 'Password',
+                            prefixIcon: Icon(Icons.lock),
+                            border: OutlineInputBorder(),
+                          ),
+                          obscureText: true,
+                          validator: (v) => (v == null || v.length < 4)
+                              ? 'Password must be at least 4 characters'
+                              : null,
+                          onFieldSubmitted: (_) =>
+                              _confirmPassFocus.requestFocus(),
+                        ),
+                        const SizedBox(height: 10),
+                        // Confirm Password
+                        TextFormField(
+                          controller: _confirmPassCtrl,
+                          focusNode: _confirmPassFocus,
+                          decoration: const InputDecoration(
+                            labelText: 'Confirm Password',
+                            prefixIcon: Icon(Icons.lock_outline),
+                            border: OutlineInputBorder(),
+                          ),
+                          obscureText: true,
+                          validator: (v) {
+                            if (v == null || v.isEmpty) {
+                              return 'Confirm your password';
+                            }
+                            if (v != _passCtrl.text) {
+                              return 'Passwords do not match';
+                            }
+                            return null;
+                          },
+                          onFieldSubmitted: (_) => _signup(),
+                        ),
+                        SizedBox(height: isSmallScreen ? 12 : 20),
+                        _loading
+                            ? const CircularProgressIndicator()
+                            : FilledButton(
+                                onPressed: _signup,
+                                style: FilledButton.styleFrom(
+                                  minimumSize: Size(
+                                      double.infinity, isSmallScreen ? 44 : 50),
+                                ),
+                                child: const Text('Create account'),
+                              ),
+                        SizedBox(height: isSmallScreen ? 8 : 10),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                          },
+                          child: const Text('Already have an account? Login'),
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
           ),
-        ),
         ),
       ),
     );
