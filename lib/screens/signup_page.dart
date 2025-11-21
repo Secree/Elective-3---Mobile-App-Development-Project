@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../db/user_db.dart';
 import '../services/auth_service.dart';
 import '../utils/security_helper.dart';
@@ -20,6 +21,14 @@ class _SignupPageState extends State<SignupPage> {
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
   final _confirmPassCtrl = TextEditingController();
+  final _firstNameFocus = FocusNode();
+  final _lastNameFocus = FocusNode();
+  final _middleInitialFocus = FocusNode();
+  final _addressFocus = FocusNode();
+  final _ageFocus = FocusNode();
+  final _emailFocus = FocusNode();
+  final _passFocus = FocusNode();
+  final _confirmPassFocus = FocusNode();
   bool _loading = false;
 
   @override
@@ -32,6 +41,14 @@ class _SignupPageState extends State<SignupPage> {
     _emailCtrl.dispose();
     _passCtrl.dispose();
     _confirmPassCtrl.dispose();
+    _firstNameFocus.dispose();
+    _lastNameFocus.dispose();
+    _middleInitialFocus.dispose();
+    _addressFocus.dispose();
+    _ageFocus.dispose();
+    _emailFocus.dispose();
+    _passFocus.dispose();
+    _confirmPassFocus.dispose();
     super.dispose();
   }
 
@@ -73,12 +90,14 @@ class _SignupPageState extends State<SignupPage> {
             const SnackBar(content: Text('Account created successfully!')),
           );
           // Navigate to home with the newly registered email
-          Navigator.of(context).pushReplacementNamed('/home', arguments: newUser.email);
+          Navigator.of(context)
+              .pushReplacementNamed('/home', arguments: newUser.email);
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Unable to register. Email may already exist.')),
+            const SnackBar(
+                content: Text('Unable to register. Email may already exist.')),
           );
         }
       }
@@ -96,7 +115,7 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final isSmallScreen = screenHeight < 700;
-    
+
     return Scaffold(
       extendBodyBehindAppBar: true,
       appBar: AppBar(
@@ -130,61 +149,78 @@ class _SignupPageState extends State<SignupPage> {
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Text('Create Account',
-                            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                              fontSize: isSmallScreen ? 20 : null,
-                            )),
+                            style: Theme.of(context)
+                                .textTheme
+                                .headlineMedium
+                                ?.copyWith(
+                                  fontSize: isSmallScreen ? 20 : null,
+                                )),
                         SizedBox(height: isSmallScreen ? 12 : 20),
                         // First Name
                         TextFormField(
                           controller: _firstNameCtrl,
+                          focusNode: _firstNameFocus,
                           decoration: const InputDecoration(
                             labelText: 'First Name',
                             prefixIcon: Icon(Icons.person),
                             border: OutlineInputBorder(),
                           ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Enter first name' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Enter first name'
+                              : null,
+                          onFieldSubmitted: (_) =>
+                              _lastNameFocus.requestFocus(),
                         ),
                         SizedBox(height: isSmallScreen ? 8 : 10),
                         // Last Name
                         TextFormField(
                           controller: _lastNameCtrl,
+                          focusNode: _lastNameFocus,
                           decoration: const InputDecoration(
                             labelText: 'Last Name',
                             prefixIcon: Icon(Icons.person_outline),
                             border: OutlineInputBorder(),
                           ),
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Enter last name' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Enter last name'
+                              : null,
+                          onFieldSubmitted: (_) =>
+                              _middleInitialFocus.requestFocus(),
                         ),
                         SizedBox(height: isSmallScreen ? 8 : 10),
                         // Middle Initial (Optional)
                         TextFormField(
                           controller: _middleInitialCtrl,
+                          focusNode: _middleInitialFocus,
                           decoration: const InputDecoration(
                             labelText: 'Middle Initial (Optional)',
                             prefixIcon: Icon(Icons.text_fields),
                             border: OutlineInputBorder(),
                           ),
                           maxLength: 1,
+                          onFieldSubmitted: (_) => _addressFocus.requestFocus(),
                         ),
                         const SizedBox(height: 10),
                         // Address
                         TextFormField(
                           controller: _addressCtrl,
+                          focusNode: _addressFocus,
                           decoration: const InputDecoration(
                             labelText: 'Address',
                             prefixIcon: Icon(Icons.home),
                             border: OutlineInputBorder(),
                           ),
                           maxLines: 2,
-                          validator: (v) =>
-                              (v == null || v.trim().isEmpty) ? 'Enter address' : null,
+                          validator: (v) => (v == null || v.trim().isEmpty)
+                              ? 'Enter address'
+                              : null,
+                          onFieldSubmitted: (_) => _ageFocus.requestFocus(),
                         ),
                         const SizedBox(height: 10),
                         // Age
                         TextFormField(
                           controller: _ageCtrl,
+                          focusNode: _ageFocus,
                           decoration: const InputDecoration(
                             labelText: 'Age',
                             prefixIcon: Icon(Icons.calendar_today),
@@ -205,11 +241,13 @@ class _SignupPageState extends State<SignupPage> {
                             }
                             return null;
                           },
+                          onFieldSubmitted: (_) => _emailFocus.requestFocus(),
                         ),
                         const SizedBox(height: 10),
                         // Email
                         TextFormField(
                           controller: _emailCtrl,
+                          focusNode: _emailFocus,
                           decoration: const InputDecoration(
                             labelText: 'Email',
                             prefixIcon: Icon(Icons.email),
@@ -225,11 +263,13 @@ class _SignupPageState extends State<SignupPage> {
                             }
                             return null;
                           },
+                          onFieldSubmitted: (_) => _passFocus.requestFocus(),
                         ),
                         const SizedBox(height: 10),
                         // Password
                         TextFormField(
                           controller: _passCtrl,
+                          focusNode: _passFocus,
                           decoration: const InputDecoration(
                             labelText: 'Password',
                             prefixIcon: Icon(Icons.lock),
@@ -239,11 +279,14 @@ class _SignupPageState extends State<SignupPage> {
                           validator: (v) => (v == null || v.length < 4)
                               ? 'Password must be at least 4 characters'
                               : null,
+                          onFieldSubmitted: (_) =>
+                              _confirmPassFocus.requestFocus(),
                         ),
                         const SizedBox(height: 10),
                         // Confirm Password
                         TextFormField(
                           controller: _confirmPassCtrl,
+                          focusNode: _confirmPassFocus,
                           decoration: const InputDecoration(
                             labelText: 'Confirm Password',
                             prefixIcon: Icon(Icons.lock_outline),
@@ -259,6 +302,7 @@ class _SignupPageState extends State<SignupPage> {
                             }
                             return null;
                           },
+                          onFieldSubmitted: (_) => _signup(),
                         ),
                         SizedBox(height: isSmallScreen ? 12 : 20),
                         _loading
@@ -266,7 +310,8 @@ class _SignupPageState extends State<SignupPage> {
                             : FilledButton(
                                 onPressed: _signup,
                                 style: FilledButton.styleFrom(
-                                  minimumSize: Size(double.infinity, isSmallScreen ? 44 : 50),
+                                  minimumSize: Size(
+                                      double.infinity, isSmallScreen ? 44 : 50),
                                 ),
                                 child: const Text('Create account'),
                               ),
